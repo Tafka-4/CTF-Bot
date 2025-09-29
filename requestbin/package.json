@@ -1,0 +1,14 @@
+{
+  "name": "ctf-bot-reqbin",
+  "version": "1.0.0",
+  "description": "requestbin for ctf bot",
+  "license": "BSD-2-Clause",
+  "author": "Tafka4",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "tsc && node dist/index.js",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

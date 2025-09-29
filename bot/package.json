@@ -1,0 +1,29 @@
+{
+  "name": "ctf-bot",
+  "version": "1.0.0",
+  "description": "CTF management bot",
+  "keywords": [
+    "discord-bot"
+  ],
+  "homepage": "https://github.com/Tafka-4/CTF-Bot#readme",
+  "bugs": {
+    "url": "https://github.com/Tafka-4/CTF-Bot/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tafka-4/CTF-Bot.git"
+  },
+  "license": "BSD-2-Clause",
+  "author": "Tafka4",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "tsc && node dist/index.js",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "discord.js": "^14.22.1",
+    "dotenv": "^17.2.2"
+  }
+}
