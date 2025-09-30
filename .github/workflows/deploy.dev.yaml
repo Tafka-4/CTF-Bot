@@ -6,7 +6,7 @@ on:
 
 jobs:
     deploy:
-        runs-on: [self-hosted, tafka-deploy-master]
+        runs-on: [self-hosted]
         environment: develop
         concurrency:
             group: tafka-deploy-master
