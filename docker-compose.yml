@@ -1,0 +1,11 @@
+version: '3.9'
+services:
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_BOT_CLIENT_ID=${DISCORD_BOT_CLIENT_ID}
+      - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+      - DOMAIN=${DOMAIN}
