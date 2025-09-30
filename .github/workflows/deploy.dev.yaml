@@ -6,10 +6,10 @@ on:
 
 jobs:
     deploy:
-        runs-on: [self-hosted, dev-deploy-runner]
+        runs-on: [self-hosted, tafka-deploy-master]
         environment: develop
         concurrency:
-            group: dev-test-deploy
+            group: tafka-deploy-master
             cancel-in-progress: true
 
         steps:
