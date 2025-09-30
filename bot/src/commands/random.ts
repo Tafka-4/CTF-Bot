@@ -12,7 +12,7 @@ export const data = new SlashCommandBuilder()
 	);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-	await interaction.deferReply();
+	await interaction.deferReply({ ephemeral: true });
 	const min = interaction.options.getInteger("min", true);
 	const max = interaction.options.getInteger("max", true);
 	const random = Math.floor(Math.random() * (max - min + 1)) + min;

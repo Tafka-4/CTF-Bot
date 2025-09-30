@@ -7,7 +7,7 @@ export const data = new SlashCommandBuilder()
 	.setDescription("Delete the current challenge post from this thread");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-	await interaction.deferReply({ ephemeral: true });
+	await interaction.deferReply();
 	const channelId = interaction.channelId;
 	const server = serverDataStorage.read();
 	const list = (server.problems?.[channelId] as any[]) ?? [];

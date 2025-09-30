@@ -6,6 +6,6 @@ export const data = new SlashCommandBuilder()
 	.setDescription("Replies with Pong!");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-	await interaction.deferReply();
+	await interaction.deferReply({ ephemeral: true });
 	await interaction.editReply("Pong!");
 }

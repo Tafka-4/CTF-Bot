@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { ChatInputCommandInteraction } from "discord.js";
-import { ctfQueueManager } from "../utils/ctfQueueManager.js";
+import { ctfQueueManager } from "../../utils/ctfQueueManager.js";
+import type { CTFItem } from "../../utils/storage.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("ctfqueue")
@@ -14,6 +15,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		await interaction.editReply("Queue is empty.");
 		return;
 	}
-	const lines = q.map((v, i) => `${i + 1}. ${v.name} - ${v.url}`);
+	const lines = q.map(
+		(v: CTFItem, i: number) =>
+			`${i + 1}. ${v.name} - ${v.url}${v.pending ? " **[PENDING]**" : ""}`
+	);
 	await interaction.editReply(lines.join("\n"));
 }
