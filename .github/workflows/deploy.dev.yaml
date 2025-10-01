@@ -26,15 +26,15 @@ jobs:
 
             - name: Rsync manually
               run: |
-                  rsync -avz --delete --exclude='.git' --exclude='.env' --exclude='nginx/ssl' -e "ssh -i /tmp/key" ./ ${{ secrets.DEV_TEST_USER }}@${{ secrets.DEV_TEST_HOST }}:/opt/app/CTF-Bot/
+                  rsync -avz --delete --exclude='.git' --exclude='.env' --exclude='nginx/ssl' -e "ssh -i /tmp/key" ./ ${{ secrets.DEV_TEST_USER }}@${{ secrets.DEV_TEST_HOST }}:~/CTF-Bot/
 
             - name: Create .env file on remote
               run: |
-                  ssh -i /tmp/key ${{ secrets.DEV_TEST_USER }}@${{ secrets.DEV_TEST_HOST }} 'echo "${{ secrets.ENV_FILE_DEV }}" | base64 -d > /opt/app/CTF-Bot/.env'
+                  ssh -i /tmp/key ${{ secrets.DEV_TEST_USER }}@${{ secrets.DEV_TEST_HOST }} 'echo "${{ secrets.ENV_FILE_DEV }}" | base64 -d > ~/CTF-Bot/.env'
 
             - name: Run deploy.sh remotely
               run: |
-                  ssh -i /tmp/key ${{ secrets.DEV_TEST_USER }}@${{ secrets.DEV_TEST_HOST }} "chmod +x /opt/app/CTF-Bot/deploy.sh && cd /opt/app/CTF-Bot && sudo ./deploy.sh"
+                  ssh -i /tmp/key ${{ secrets.DEV_TEST_USER }}@${{ secrets.DEV_TEST_HOST }} "chmod +x ~/CTF-Bot/deploy.sh && cd ~/CTF-Bot && sudo ./deploy.sh"
 
             - name: Remove ssh key
               run: rm /tmp/key
