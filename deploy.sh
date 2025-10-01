@@ -13,4 +13,4 @@ docker image prune -f
 echo "[INFO] Starting new containers"
 docker compose up --build -d --remove-orphans
 
-rm ~/CTF-Bot/.env
+rm /home/deploy/CTF-Bot/.env
