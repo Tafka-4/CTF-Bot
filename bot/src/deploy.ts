@@ -9,34 +9,47 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export async function clearAllCommands() {
+	const rest = new REST({ version: "10" }).setToken(
+		process.env.DISCORD_BOT_TOKEN as string
+	);
+
+	const clientId = process.env.DISCORD_BOT_CLIENT_ID as string;
+	const guildId = process.env.DISCORD_GUILD_ID as string | undefined;
+
+	console.log("clearing all slash commands...");
+
+	let success = true;
+
 	try {
-		const rest = new REST({ version: "10" }).setToken(
-			process.env.DISCORD_BOT_TOKEN as string
-		);
-
-		console.log("clearing all slash commands...");
-
-		await rest.put(
-			Routes.applicationGuildCommands(
-				process.env.DISCORD_BOT_CLIENT_ID as string,
-				process.env.DISCORD_GUILD_ID as string
-			),
-			{ body: [] }
-		);
-
-		await rest.put(
-			Routes.applicationCommands(
-				process.env.DISCORD_BOT_CLIENT_ID as string
-			),
-			{ body: [] }
-		);
-
-		console.log("All slash commands cleared successfully!");
-		return true;
+		await rest.put(Routes.applicationCommands(clientId), { body: [] });
+		console.log("Global slash commands cleared.");
 	} catch (error) {
-		console.error("Clear slash commands failed:", error);
-		return false;
+		console.error("Failed to clear global commands:", error);
+		success = false;
 	}
+
+	if (guildId) {
+		try {
+			await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+				body: [],
+			});
+			console.log("Guild slash commands cleared.");
+		} catch (error: any) {
+			if (error && (error.code === 50001 || error.status === 403)) {
+				console.warn(
+					"Skip clearing guild commands: Missing Access. Is the bot invited to the guild with applications.commands?"
+				);
+			} else {
+				console.error("Failed to clear guild commands:", error);
+				success = false;
+			}
+		}
+	}
+
+	if (success) {
+		console.log("All applicable slash commands cleared.");
+	}
+	return success;
 }
 
 function walk(dir: string): string[] {
