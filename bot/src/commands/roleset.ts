@@ -20,8 +20,7 @@ export const data = new SlashCommandBuilder()
 			.setRequired(true)
 	);
 
-const ROLE_CATEGORIES = ["web", "pwn", "rev", "crypto", "misc", "ai", "osint"];
-const MAIN_ROLES = ["H4cker", "Cat"];
+const ROLE_CATEGORIES = ["web", "pwn", "rev", "crypto"];
 
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply({ ephemeral: true });
@@ -56,18 +55,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	const guild = interaction.guild;
 	const rolesMap: Record<string, Role | null> = {};
 
-	for (const roleName of MAIN_ROLES) {
-		let role = guild.roles.cache.find((r) => r.name === roleName);
-		if (!role) {
-			await interaction.editReply(
-				`Role ${roleName} does not exist. Please create the role before using it.`
-			);
-			rolesMap[roleName] = null;
-		} else {
-			rolesMap[roleName] = role;
-		}
-	}
-
 	for (const category of ROLE_CATEGORIES) {
 		const roleName = category.charAt(0).toUpperCase() + category.slice(1);
 		let role = guild.roles.cache.find((r) => r.name === roleName);
@@ -80,21 +67,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			rolesMap[roleName] = role || null;
 		}
 	}
-
-	const mainRoleButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-		new ButtonBuilder()
-			.setCustomId("role-main:H4cker")
-			.setLabel("H4cker")
-			.setStyle(
-				rolesMap["H4cker"] ? ButtonStyle.Primary : ButtonStyle.Secondary
-			),
-		new ButtonBuilder()
-			.setCustomId("role-main:Cat")
-			.setLabel("Cat")
-			.setStyle(
-				rolesMap["Cat"] ? ButtonStyle.Primary : ButtonStyle.Secondary
-			)
-	);
 
 	const categoryButtons: ActionRowBuilder<ButtonBuilder>[] = [];
 	let currentRow = new ActionRowBuilder<ButtonBuilder>();
@@ -124,14 +96,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	const embed = new EmbedBuilder()
 		.setTitle("🎯 Role Selection")
 		.setDescription(
-			"Click the buttons below to select roles!\n\n**Main Roles:**\n**Category Roles:** (Multiple selection possible)"
+			"Click the buttons below to toggle challenge category roles."
 		)
 		.setColor(0x00ff00)
 		.setTimestamp();
 
 	const message = await channel.send({
 		embeds: [embed],
-		components: [mainRoleButtons, ...categoryButtons],
+		components: categoryButtons,
 	});
 
 	serverDataStorage.update((current) => ({

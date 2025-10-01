@@ -45,9 +45,19 @@ export function setCachedResults(
 	items: any[]
 ) {
 	const key = getCacheKey(q, timeframe, page);
-	searchResultsCache.set(key, {
+	const payload = {
 		total,
 		items,
 		timestamp: Date.now(),
-	});
+	};
+	searchResultsCache.set(key, payload);
+	const globalAny = globalThis as any;
+	if (globalAny) {
+		if (!globalAny.ctftimeSearchCache) {
+			globalAny.ctftimeSearchCache = new Map();
+		}
+		try {
+			globalAny.ctftimeSearchCache.set(key, payload);
+		} catch {}
+	}
 }

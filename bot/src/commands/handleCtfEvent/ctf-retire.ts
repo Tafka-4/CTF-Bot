@@ -6,13 +6,17 @@ import {
 	retireForum,
 } from "../../utils/ctfThreads.js";
 import { ctfQueueManager } from "../../utils/ctfQueueManager.js";
+import { ensureForumThreadContext } from "../../utils/interactionGuards.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("ctf-retire")
 	.setDescription("Move this CTF thread to RETIRED category");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-	await interaction.deferReply();
+	const thread = await ensureForumThreadContext(interaction);
+	if (!thread) return;
+
+	await interaction.deferReply({ ephemeral: true });
 	if (!interaction.guild) {
 		await interaction.editReply("This command must be used in a guild.");
 		return;

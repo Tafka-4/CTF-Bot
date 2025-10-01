@@ -9,7 +9,7 @@ import {
 	StringSelectMenuBuilder,
 	StringSelectMenuOptionBuilder,
 } from "discord.js";
-import { getCachedResults, setCachedResults } from "./cache.js";
+import { getCachedResults } from "./cache.js";
 import { ctfQueueManager } from "../../utils/ctfQueueManager.js";
 
 export async function handleCTFSelection(interaction: any) {
@@ -40,37 +40,12 @@ export async function handleCTFSelection(interaction: any) {
 		}
 
 		if (!selectedCTF) {
-			try {
-				const mod = await import("../../utils/ctftime.js");
-				const { items } = await mod.searchCtftimeEvents(
-					decodedQ,
-					decodedTimeframe as any,
-					page,
-					5
-				);
-				selectedCTF = items.find(
-					(ctf) => ctf.id.toString() === selectedValue
-				);
-
-				if (items.length > 0) {
-					setCachedResults(
-						decodedQ,
-						decodedTimeframe,
-						page,
-						items.length * 5,
-						items
-					);
-				}
-			} catch (error) {
-				console.error("Error fetching CTF details:", error);
-				selectedCTF = null;
-				await interaction.reply({
-					content:
-						"❌ Failed to fetch CTF details. Please try again.",
-					flags: 64,
-				});
-				return;
-			}
+			await interaction.reply({
+				content:
+					"❌ This search result expired. Please run `/ctftime` again and pick the CTF once more.",
+				flags: 64,
+			});
+			return;
 		}
 
 		if (!selectedCTF) {

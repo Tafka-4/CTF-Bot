@@ -4,6 +4,7 @@ import type {
 	Guild,
 	ThreadChannel,
 	ForumChannel,
+	GuildForumTagData,
 } from "discord.js";
 import { serverDataStorage } from "./storage.js";
 import { buildCategoryButtonRows } from "./challengeFlow.js";
@@ -29,45 +30,59 @@ export async function findOrCreateCategory(
 }
 
 export async function setupForumTags(forum: ForumChannel): Promise<void> {
-	const existingTags = forum.availableTags;
 	const desiredEmojiByName: Record<string, string | null> = {
 		Prob: "✏️",
 		solve: "💡",
 		general: "🧵",
 	};
 
-	for (const name of Object.keys(desiredEmojiByName)) {
-		const found = existingTags.find((t) => t.name === name);
-		if (!found) {
-			try {
-				await (forum as any).createTag({
-					name,
-					moderated: false,
-					emoji: desiredEmojiByName[name],
-				});
-			} catch (e) {
-				console.error(`Error creating forum tag ${name}:`, e);
+	const existing = forum.availableTags;
+	const desiredNames = Object.keys(desiredEmojiByName);
+	const seen = new Set<string>();
+	let requiresUpdate = false;
+
+	const payload: GuildForumTagData[] = existing.map((tag) => {
+		const desiredEmoji = desiredEmojiByName[tag.name];
+		if (desiredEmoji !== undefined) {
+			seen.add(tag.name);
+			const currentEmojiName = tag.emoji?.name ?? null;
+			if (currentEmojiName !== desiredEmoji) {
+				requiresUpdate = true;
 			}
+			return {
+				id: tag.id,
+				name: tag.name,
+				moderated: tag.moderated,
+				emoji: desiredEmoji ? { id: null, name: desiredEmoji } : null,
+			};
 		}
+		return {
+			id: tag.id,
+			name: tag.name,
+			moderated: tag.moderated,
+			emoji: tag.emoji,
+		};
+	});
+
+	for (const name of desiredNames) {
+		if (seen.has(name)) continue;
+		requiresUpdate = true;
+		const emoji = desiredEmojiByName[name];
+		payload.push({
+			name,
+			moderated: false,
+			emoji: emoji ? { id: null, name: emoji } : null,
+		});
 	}
 
-	for (const name of Object.keys(desiredEmojiByName)) {
-		const found = (forum.availableTags || []).find(
-			(t: any) => t.name === name
-		);
-		const desired = desiredEmojiByName[name];
-		const currentEmoji =
-			(found as any)?.emoji?.name || (found as any)?.emoji || null;
-		if (found && currentEmoji !== desired) {
-			try {
-				// @ts-ignore - editTag is available on ForumChannel in discord.js v14
-				await (forum as any).editTag((found as any).id, {
-					emoji: desired,
-				});
-			} catch (e) {
-				console.error(`Error editing forum tag ${name} emoji:`, e);
-			}
-		}
+	if (!requiresUpdate) {
+		return;
+	}
+
+	try {
+		await forum.setAvailableTags(payload);
+	} catch (error) {
+		console.error("Error configuring forum tags:", error);
 	}
 }
 

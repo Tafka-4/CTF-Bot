@@ -12,6 +12,7 @@ import {
 	searchCtftimeEvents,
 	type CtftimeTimeframe,
 } from "../../utils/ctftime.js";
+import { setCachedResults } from "../../events/interactionHandlers/cache.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("ctftime")
@@ -46,6 +47,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		page,
 		PAGE_SIZE
 	);
+
+	setCachedResults(q, timeframe, page, total, items);
 
 	const embed = new EmbedBuilder()
 		.setTitle(`CTFtime search: ${q}`)

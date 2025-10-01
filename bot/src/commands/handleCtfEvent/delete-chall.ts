@@ -1,13 +1,17 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { ChatInputCommandInteraction, PermissionFlagsBits } from "discord.js";
 import { serverDataStorage } from "../../utils/storage.js";
+import { ensureForumThreadContext } from "../../utils/interactionGuards.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("delete-chall")
 	.setDescription("Delete the current challenge post from this thread");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-	await interaction.deferReply();
+	const thread = await ensureForumThreadContext(interaction);
+	if (!thread) return;
+
+	await interaction.deferReply({ ephemeral: true });
 	const channelId = interaction.channelId;
 	const server = serverDataStorage.read();
 	const list = (server.problems?.[channelId] as any[]) ?? [];
@@ -47,12 +51,57 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		} catch {}
 	}
 	serverDataStorage.update((cur) => {
-		const problems = cur.problems ?? {};
-		const arr = (problems[channelId] as any[]) ?? [];
-		arr.shift();
-		if (arr.length === 0) delete problems[channelId];
-		else problems[channelId] = arr;
-		return { ...cur, problems };
+		const next = { ...cur };
+		const problems = { ...(cur.problems ?? {}) } as Record<string, any[]>;
+		const clues = { ...(cur.clues ?? {}) } as Record<string, any[]>;
+		const participants = {
+			...(cur.participantsByThread ?? {}),
+		} as Record<string, string[]>;
+		const contributors = {
+			...(cur.contributorsByThread ?? {}),
+		} as Record<string, { userId: string; userName: string }[]>;
+		const firstbloodInfo = { ...(cur.firstbloodInfo ?? {}) } as Record<
+			string,
+			any
+		>;
+		const firstbloodByForum = { ...(cur.firstbloodByForum ?? {}) } as Record<
+			string,
+			any
+		>;
+
+		delete problems[channelId];
+		delete clues[channelId];
+		delete participants[channelId];
+		delete contributors[channelId];
+		delete firstbloodInfo[channelId];
+
+		for (const [forumId, entry] of Object.entries(firstbloodByForum)) {
+			if (entry?.threadId === channelId) {
+				delete firstbloodByForum[forumId];
+			}
+		}
+
+		const solves = (cur.solves ?? []).filter(
+			(s) => s.threadId !== channelId
+		);
+
+		return {
+			...next,
+			problems,
+			clues,
+			participantsByThread: participants,
+			contributorsByThread: contributors,
+			solves,
+			firstbloodInfo,
+			firstbloodByForum,
+		};
 	});
-	await interaction.editReply("Challenge post deleted.");
+
+	try {
+		await thread.delete("Challenge removed via /delete-chall");
+	} catch (error) {
+		console.error("Failed to delete thread during delete-chall:", error);
+	}
+
+	await interaction.editReply("Challenge thread deleted.");
 }

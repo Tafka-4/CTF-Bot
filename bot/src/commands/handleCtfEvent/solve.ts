@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { ChatInputCommandInteraction } from "discord.js";
 import { serverDataStorage } from "../../utils/storage.js";
 import { updateChallengeMessageStatus } from "../../utils/challengeFlow.js";
+import { ensureForumThreadContext } from "../../utils/interactionGuards.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("solve")
@@ -11,6 +12,9 @@ export const data = new SlashCommandBuilder()
 	);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+	const thread = await ensureForumThreadContext(interaction);
+	if (!thread) return;
+
 	await interaction.deferReply({ ephemeral: true });
 	const flag = interaction.options.getString("flag", true);
 	const guildId = interaction.guildId as string;
@@ -24,8 +28,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		timestamp: new Date().toISOString(),
 	};
 
-	const forumId: string | undefined = (interaction.channel as any)?.parent
-		?.id;
+	const forumId: string | undefined = (thread.parent as any)?.id;
 	const currentData = serverDataStorage.read();
 	const problems = currentData.problems?.[record.threadId] ?? [];
 	const latestProblemId =
@@ -121,13 +124,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	);
 
 	try {
-		const msg = `${isForumFirst ? "**[FIRST BLOOD]** " : ""}Solved by <@${
+		const summary = `${isForumFirst ? "**[FIRST BLOOD]** " : ""}Solved by <@${
 			record.solverId
-		}> at ${new Date(
-			record.timestamp
-		).toLocaleString()}\nFlag: \`${flag}\``;
-		if (interaction.channel && interaction.channel.isTextBased()) {
-			await (interaction.channel as any).send(msg);
+		}> at ${new Date(record.timestamp).toLocaleString()}`;
+		if (thread.isTextBased()) {
+			await (thread as any).send(summary);
 		}
 		const cur = serverDataStorage.read();
 		const ctfThreads = cur.ctfThreadsByName || {};
@@ -142,7 +143,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				.fetch(noticeId)
 				.catch(() => null);
 			if (ch && ch.isTextBased()) {
-				await (ch as any).send(msg);
+				await (ch as any).send(summary);
 			}
 		}
 	} catch {}

@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { ChatInputCommandInteraction } from "discord.js";
 import { serverDataStorage } from "../../utils/storage.js";
+import { ensureForumThreadContext } from "../../utils/interactionGuards.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("clue")
@@ -14,6 +15,8 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction) {
 	const sub = interaction.options.getSubcommand();
+	const thread = await ensureForumThreadContext(interaction);
+	if (!thread) return;
 	const threadId = interaction.channelId;
 	if (sub === "add") {
 		try {
