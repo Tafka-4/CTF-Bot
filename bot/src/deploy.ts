@@ -70,18 +70,17 @@ export async function deployCommands() {
 		console.log(`deploy slash commands... (${commands.length} commands)`);
 
 		// Global deploy
-		/*
-        await rest.put(
-            Routes.applicationCommands(
-                process.env.DISCORD_BOT_CLIENT_ID as string
-            ),
-            {
-                body: commands
-            }
-        );
-        */
+		await rest.put(
+			Routes.applicationCommands(
+				process.env.DISCORD_BOT_CLIENT_ID as string
+			),
+			{
+				body: commands,
+			}
+		);
 
 		// Debug deploy
+		/*
 		await rest.put(
 			Routes.applicationGuildCommands(
 				process.env.DISCORD_BOT_CLIENT_ID as string,
@@ -91,6 +90,7 @@ export async function deployCommands() {
 				body: commands,
 			}
 		);
+		*/
 
 		console.log("Slash commands are deployed successfully!");
 		return true;
