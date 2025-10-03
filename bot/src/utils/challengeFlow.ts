@@ -103,7 +103,6 @@ export async function updateChallengeMessageStatus(
 		const thread = await guild.channels.fetch(threadId).catch(() => null);
 		if (!thread || !thread.isTextBased()) return;
 
-		// 스타터 메시지 우선 조회 (저장된 messageId가 없거나 잘못된 경우 대비)
 		let message: any = null;
 		try {
 			if (typeof (thread as any).fetchStarterMessage === "function") {
@@ -128,7 +127,6 @@ export async function updateChallengeMessageStatus(
 			);
 		}
 
-		// 포럼 태그를 Prob -> solve로 변경 (메시지가 아닌 스레드의 태그를 갱신해야 함)
 		if (
 			(thread as any).parent &&
 			"availableTags" in (thread as any).parent
@@ -155,7 +153,6 @@ export async function updateChallengeMessageStatus(
 			}
 		}
 
-		// 스타터 메시지 헤더만 업데이트 (태그는 위에서 스레드에 적용)
 		if (message && newContent && typeof message.edit === "function") {
 			await message.edit({ content: newContent });
 		}
@@ -309,7 +306,6 @@ export async function createAndSaveChallengePost(
 
 		console.log("Challenge thread created successfully:", thread.id);
 
-		// 포럼 스레드의 스타터 메시지 ID를 저장하여 이후 편집 가능하도록 함
 		let starterMessageId: string | undefined = undefined;
 		try {
 			if (typeof (thread as any).fetchStarterMessage === "function") {

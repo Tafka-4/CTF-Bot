@@ -7,6 +7,7 @@ import {
 	ButtonBuilder,
 	ButtonStyle,
 	EmbedBuilder,
+	PermissionFlagsBits,
 } from "discord.js";
 import { serverDataStorage } from "../utils/storage.js";
 
@@ -53,41 +54,68 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	}
 
 	const guild = interaction.guild;
-	const rolesMap: Record<string, Role | null> = {};
+	await guild.roles.fetch();
+	const selfMember = guild.members.me;
+	if (!selfMember) {
+		await interaction.editReply(
+			"Unable to resolve bot member in this guild. Please try again later."
+		);
+		return;
+	}
+	const canManageRoles = selfMember.permissions.has(PermissionFlagsBits.ManageRoles);
+
+	const resolvedRoles: Array<{ category: string; role: Role; created: boolean }>
+		= [];
 
 	for (const category of ROLE_CATEGORIES) {
 		const roleName = category.charAt(0).toUpperCase() + category.slice(1);
-		let role = guild.roles.cache.find((r) => r.name === roleName);
+		let role = guild.roles.cache.find(
+			(r) => r.name.toLowerCase() === roleName.toLowerCase()
+		);
+
 		if (!role) {
-			await interaction.editReply(
-				`Role ${roleName} does not exist. Please create the role before using it.`
-			);
-			rolesMap[roleName] = null;
+			if (!canManageRoles) {
+				await interaction.editReply(
+					`❌ Missing permission to create role "${roleName}". Please create it manually and rerun the command.`
+				);
+				return;
+			}
+			try {
+				role = await guild.roles.create({
+					name: roleName,
+					mentionable: true,
+					reason: `Auto-created by /roleset for ${interaction.user.tag}`,
+				});
+				resolvedRoles.push({ category, role, created: true });
+			} catch (error) {
+				console.error("Failed to create role", roleName, error);
+				await interaction.editReply(
+					`❌ Failed to create role "${roleName}". Please check my permissions and try again.`
+				);
+				return;
+			}
 		} else {
-			rolesMap[roleName] = role || null;
+			resolvedRoles.push({ category, role, created: false });
 		}
 	}
 
 	const categoryButtons: ActionRowBuilder<ButtonBuilder>[] = [];
 	let currentRow = new ActionRowBuilder<ButtonBuilder>();
 
-	for (let i = 0; i < ROLE_CATEGORIES.length; i++) {
-		const category = ROLE_CATEGORIES[i];
-		if (!category) continue;
-		const roleName = category.charAt(0).toUpperCase() + category.slice(1);
+	for (let i = 0; i < resolvedRoles.length; i++) {
+		const entry = resolvedRoles[i];
+		if (!entry) continue;
+		const { category, role } = entry;
+		const roleName = role.name;
 
 		currentRow.addComponents(
 			new ButtonBuilder()
-				.setCustomId(`role-category:${category}`)
+				.setCustomId(`role-category:${role.id}:${category}`)
 				.setLabel(roleName)
-				.setStyle(
-					rolesMap[roleName]
-						? ButtonStyle.Primary
-						: ButtonStyle.Secondary
-				)
+				.setStyle(ButtonStyle.Primary)
 		);
 
-		if ((i + 1) % 5 === 0 || i === ROLE_CATEGORIES.length - 1) {
+		if ((i + 1) % 5 === 0 || i === resolvedRoles.length - 1) {
 			categoryButtons.push(currentRow);
 			currentRow = new ActionRowBuilder<ButtonBuilder>();
 		}
@@ -115,7 +143,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		},
 	}));
 
+	const createdSummary = resolvedRoles
+		.filter((entry) => entry.created)
+		.map((entry) => entry.role.toString())
+		.join(", ");
+
 	await interaction.editReply(
-		`✅ Role selection message created successfully in ${channel} channel!`
+		`✅ Role selection message created successfully in ${channel} channel!${
+			createdSummary ? ` Created roles: ${createdSummary}` : ""
+		}`
 	);
 }

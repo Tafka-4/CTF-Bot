@@ -1,3 +1,5 @@
+import { safeFollowUp, safeReply } from "../../utils/interactionResponses.js";
+
 export async function handleCommand(interaction: any, client: any) {
 	const command = client.commands.get(interaction.commandName);
 
@@ -19,18 +21,21 @@ export async function handleCommand(interaction: any, client: any) {
 		}
 
 		const errorMessage = "There was an error while executing this command!";
+		const fallback = `⚠️ ${errorMessage}`;
 
 		try {
-			if (interaction.replied || interaction.deferred) {
-				await interaction.followUp({
-					content: errorMessage,
-					flags: 64,
-				});
+			if (interaction.replied) {
+				await safeFollowUp(
+					interaction,
+					{ content: errorMessage, ephemeral: true },
+					{ fallbackContent: fallback }
+				);
 			} else {
-				await interaction.reply({
-					content: errorMessage,
-					flags: 64,
-				});
+				await safeReply(
+					interaction,
+					{ content: errorMessage },
+					{ fallbackContent: fallback }
+				);
 			}
 		} catch (replyError) {
 			console.error("Error sending error reply:", replyError);

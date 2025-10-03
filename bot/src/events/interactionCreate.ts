@@ -2,6 +2,7 @@ import { Events, type Interaction } from "discord.js";
 import * as buttonHandlers from "./interactionHandlers/buttonHandlers.js";
 import * as selectMenuHandlers from "./interactionHandlers/selectMenuHandlers.js";
 import * as modalHandlers from "./interactionHandlers/modalHandlers.js";
+import * as requestbinHandlers from "./interactionHandlers/requestbinHandlers.js";
 import * as commandHandler from "./interactionHandlers/commandHandler.js";
 
 export const name = Events.InteractionCreate;
@@ -10,6 +11,10 @@ export const once = false;
 export async function execute(interaction: Interaction, client: any) {
 	// Handle button interactions
 	if (interaction.isButton()) {
+		if (interaction.customId.startsWith("reqbin-panel:")) {
+			await requestbinHandlers.handleRequestBinPanelButton(interaction);
+			return;
+		}
 		// CTF Schedule pagination
 		if (interaction.customId.startsWith("sched-")) {
 			await buttonHandlers.handleSchedulePagination(interaction);
@@ -67,6 +72,10 @@ export async function execute(interaction: Interaction, client: any) {
 
 	// Handle select menu interactions
 	if (interaction.isStringSelectMenu()) {
+		if (interaction.customId.startsWith("reqbin-panel:detail:")) {
+			await requestbinHandlers.handleRequestBinDetailSelect(interaction);
+			return;
+		}
 		if (interaction.customId === "clue-select") {
 			await selectMenuHandlers.handleClueSelect(interaction);
 			return;
@@ -99,6 +108,7 @@ export async function execute(interaction: Interaction, client: any) {
 			await modalHandlers.handleClueAddModal(interaction);
 			return;
 		}
+
 	}
 
 	// Handle chat input commands

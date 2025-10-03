@@ -150,6 +150,8 @@ export async function handleCTFSelection(interaction: any) {
 	}
 }
 
+
+
 export async function handleClueSelect(interaction: any) {
 	try {
 		// Immediately ack to avoid 10062

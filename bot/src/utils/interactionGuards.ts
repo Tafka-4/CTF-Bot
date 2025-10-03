@@ -1,7 +1,8 @@
 import { ChannelType } from "discord.js";
 import type { ChatInputCommandInteraction, ThreadChannel } from "discord.js";
 
-const DEFAULT_ERROR = "This command can only be used inside a CTF challenge thread.";
+const DEFAULT_ERROR =
+	"This command can only be used inside a CTF challenge thread.";
 
 export async function ensureForumThreadContext(
 	interaction: ChatInputCommandInteraction,

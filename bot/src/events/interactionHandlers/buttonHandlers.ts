@@ -3,6 +3,9 @@ import {
 	ButtonBuilder,
 	ButtonStyle,
 	EmbedBuilder,
+	PermissionFlagsBits,
+	GuildMember,
+	Role,
 } from "discord.js";
 import { ctfQueueManager } from "../../utils/ctfQueueManager.js";
 import { ctftimeToQueueItem } from "../../utils/ctftime.js";
@@ -154,7 +157,7 @@ export async function handleCluePagination(interaction: any) {
 			.setTimestamp(new Date());
 		const slice = list.slice(p * pageSize, p * pageSize + pageSize);
 		if (slice.length === 0) {
-			embed.setDescription("No clues yet. Use the Add button below.");
+			embed.setDescription("No clues yet. Use /clue add to create one.");
 		} else {
 			for (let i = 0; i < slice.length; i++) {
 				const idx = p * pageSize + i;
@@ -179,16 +182,9 @@ export async function handleCluePagination(interaction: any) {
 				.setDisabled(totalPages <= 1)
 		);
 
-		// Actions row
-		const actionsRow = new (ActionRowBuilder as any)().addComponents(
-			new ButtonBuilder()
-				.setCustomId("clue-add")
-				.setLabel("Add Clue")
-				.setStyle(ButtonStyle.Primary)
-		);
 
 		// Select menu row for current page
-		const rows: any[] = [navRow, actionsRow];
+		const rows: any[] = [navRow];
 		if (slice.length > 0) {
 			const menu = new StringSelectMenuBuilder()
 				.setCustomId("clue-select")
@@ -264,19 +260,29 @@ export async function handleCTFSearchPagination(interaction: any) {
 		.setTimestamp(new Date());
 
 	if (items.length === 0) {
-		embed.setDescription("No results.");
+		embed.setDescription("❌ No CTF events found matching your search.");
 	} else {
-		for (const e of items) {
-			const url = e.ctf_url || e.url;
-			const start = e.start ? new Date(e.start).toISOString() : "unknown";
+		let resultsText = `🔍 **Showing ${items.length} of ${total} result${
+			items.length === 1 ? "" : "s"
+		}:**\n\n`;
+
+		for (let i = 0; i < items.length; i++) {
+			const e = items[i]!;
+			const start = e.start
+				? new Date(e.start).toLocaleDateString()
+				: "TBD";
 			const finish = e.finish
-				? new Date(e.finish).toISOString()
-				: "unknown";
-			embed.addFields({
-				name: `${e.title} (id: ${e.id})`,
-				value: `Start: ${start}\nFinish: ${finish}\nURL: ${url}`,
-			});
+				? new Date(e.finish).toLocaleDateString()
+				: "TBD";
+
+			resultsText += `**${i + 1}.** ${e.title} (ID: ${e.id})\n`;
+			resultsText += `📅 ${start} - ${finish}\n`;
+			resultsText += `🔗 ${e.ctf_url || e.url || "No URL"}\n\n`;
 		}
+
+		resultsText += `💡 **Tip:** Use the selector below to add a CTF to your server.`;
+
+		embed.setDescription(resultsText);
 	}
 
 	const row = new (ActionRowBuilder as any)().addComponents(
@@ -297,7 +303,7 @@ export async function handleCTFSearchPagination(interaction: any) {
 			)
 			.setStyle(ButtonStyle.Primary)
 			.setLabel("Next")
-			.setDisabled(totalPages <= 1)
+		.setDisabled(p >= totalPages - 1)
 	);
 
 	const { StringSelectMenuBuilder, StringSelectMenuOptionBuilder } =
@@ -471,51 +477,148 @@ export async function handleQuickCTFAdd(interaction: any) {
 	}
 }
 
-export async function handleRoleManagement(interaction: any) {
-	const [, roleType, roleName] = interaction.customId.split(":");
 
-	if (!interaction.guild || !interaction.member) {
+function inferRoleNameFromCategory(category?: string) {
+	if (!category) return undefined;
+	return category.charAt(0).toUpperCase() + category.slice(1);
+}
+
+async function resolveRoleFromCustomId(
+	interaction: any,
+	identifier?: string,
+	extra?: string
+): Promise<Role | null> {
+	if (!interaction.guild) return null;
+	let role: Role | null = null;
+	if (identifier) {
+		// Try treat identifier as role ID first
+		role =
+			interaction.guild.roles.cache.get(identifier) ??
+			(await interaction.guild.roles
+				.fetch(identifier)
+				.catch(() => null));
+	}
+	const possibleNames = [extra, identifier]
+		.filter(Boolean)
+		.map((name) => name as string);
+	const inferredName = inferRoleNameFromCategory(possibleNames[0]);
+	if (inferredName) possibleNames.push(inferredName);
+	if (!role) {
+		await interaction.guild.roles.fetch();
+		role = interaction.guild.roles.cache.find((r: Role) =>
+			possibleNames.some(
+				(name) => name && r.name.toLowerCase() === name.toLowerCase()
+			)
+		);
+	}
+	return role ?? null;
+}
+
+async function ensureGuildMember(interaction: any): Promise<GuildMember | null> {
+	if (!interaction.guild) return null;
+	const cached = interaction.guild.members.cache.get(interaction.user.id);
+	if (cached) return cached;
+	return await interaction.guild.members
+		.fetch(interaction.user.id)
+		.catch(() => null);
+}
+
+export async function handleRoleManagement(interaction: any) {
+	const parts = interaction.customId.split(":");
+	const action = parts[0];
+	const identifier = parts[1];
+	const extra = parts[2];
+
+	if (!interaction.guild) {
 		await interaction.reply({
-			content: "❌ Only roles can be assigned in a server.",
+			content: "❌ This interaction can only be used inside a server.",
 			flags: 64,
 		});
 		return;
 	}
 
 	try {
-		let role = interaction.guild.roles.cache.find(
-			(r: any) => r.name === roleName
+		const role = await resolveRoleFromCustomId(
+			interaction,
+			identifier,
+			action === "role-category" ? extra : parts[2] ?? identifier
 		);
-
 		if (!role) {
 			await interaction.reply({
-				content: `❌ "${roleName}" role not found. Please create the role before using it.`,
+				content:
+					"❌ Unable to locate that role. Please rerun `/roleset` to regenerate the role panel.",
 				flags: 64,
 			});
 			return;
 		}
 
-		const member = interaction.member as any;
-		const hasRole = member.roles.cache.has(role.id);
+		const botMember = interaction.guild.members.me;
+		if (!botMember) {
+			await interaction.reply({
+				content: "❌ Unable to resolve bot member in this guild.",
+				flags: 64,
+			});
+			return;
+		}
+		if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+			await interaction.reply({
+				content:
+					"❌ I don't have permission to manage roles. Please grant the Manage Roles permission and try again.",
+				flags: 64,
+			});
+			return;
+		}
+		if (botMember.roles.highest.comparePositionTo(role) <= 0) {
+			await interaction.reply({
+				content:
+					"❌ My highest role is not high enough to modify this role. Please adjust the role hierarchy and try again.",
+				flags: 64,
+			});
+			return;
+		}
+		if (role.managed) {
+			await interaction.reply({
+				content: "❌ This role is managed externally and cannot be assigned manually.",
+				flags: 64,
+			});
+			return;
+		}
 
+		const member = await ensureGuildMember(interaction);
+		if (!member) {
+			await interaction.reply({
+				content: "❌ Could not resolve your member profile. Please try again.",
+				flags: 64,
+			});
+			return;
+		}
+
+		const hasRole = member.roles.cache.has(role.id);
 		if (hasRole) {
 			await member.roles.remove(role);
 			await interaction.reply({
-				content: `✅ "${roleName}" role removed.`,
+				content: `✅ Removed the ${role.name} role.`,
 				flags: 64,
 			});
 		} else {
 			await member.roles.add(role);
 			await interaction.reply({
-				content: `✅ "${roleName}" role added.`,
+				content: `✅ Added the ${role.name} role.`,
 				flags: 64,
 			});
 		}
 	} catch (error) {
 		console.error("Error assigning/removing roles:", error);
-		await interaction.reply({
-			content: "❌ Error assigning/removing roles.",
-			flags: 64,
-		});
+		if (interaction.replied || interaction.deferred) {
+			await interaction.followUp({
+				content: "❌ Error assigning/removing roles.",
+				flags: 64,
+			}).catch(() => {});
+		} else {
+			await interaction.reply({
+				content: "❌ Error assigning/removing roles.",
+				flags: 64,
+			});
+		}
 	}
 }

@@ -126,6 +126,31 @@ export type FirstbloodEntry = {
 	timestamp: string;
 };
 
+export type RequestBinRecord = {
+	ownerUserId: string;
+	guildId?: string;
+	lastThreadId?: string;
+	lastChannelId?: string;
+	binId: string;
+	label?: string;
+	createdAt: string;
+	expiresAt: string;
+	endpointUrl: string;
+	inspectUrl: string;
+	token: string;
+};
+
+export type RevshellUserRecord = {
+	ownerUserId: string;
+	guildId?: string | null;
+	lastChannelId?: string | null;
+	lastThreadId?: string | null;
+	lastSessionId?: string | null;
+	lastPairingKey?: string | null;
+	createdAt: string;
+	updatedAt: string;
+};
+
 export type ServerData = {
 	serverId?: string;
 	ctfCategoryId?: string;
@@ -172,6 +197,10 @@ export type ServerData = {
 		messageId: string;
 		guildId: string;
 	};
+	requestBinsByUser?: Record<string, RequestBinRecord>;
+	revshellByUser?: Record<string, RevshellUserRecord>;
+	/** @deprecated retained for backward compatibility */
+	requestBinsByThread?: Record<string, RequestBinRecord>;
 };
 
 export const serverDataStorage = {

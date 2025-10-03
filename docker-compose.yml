@@ -8,3 +8,33 @@ services:
       - DISCORD_BOT_CLIENT_ID=${DISCORD_BOT_CLIENT_ID}
       - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
       - DOMAIN=${DOMAIN}
+      - REQUESTBIN_SERVICE_URL=http://requestbin:3000
+      - REVSHELL_SERVICE_URL=http://revshell:3002
+  requestbin:
+    build:
+      context: ./requestbin
+      dockerfile: Dockerfile
+    environment:
+      - DOMAIN=${DOMAIN}
+    expose:
+      - 3000
+  requestbin-tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    depends_on:
+      - requestbin
+    environment:
+      - TUNNEL_TRANSPORT_PROTOCOL=http2
+    command: tunnel --no-autoupdate run --token ${REQBIN_TUNNEL_TOKEN}
+  revshell:
+    build:
+      context: ./revshell
+      dockerfile: Dockerfile
+    expose:
+      - 3002
+    environment:
+      - HTTP_PORT=3002
+      - REVSHELL_LISTEN_PORT=9001
+      - DOMAIN=${DOMAIN}
+      - TUNNEL_TRANSPORT_PROTOCOL=http2
+      - REVSHELL_TUNNEL_TOKEN=${REVSHELL_TUNNEL_TOKEN}

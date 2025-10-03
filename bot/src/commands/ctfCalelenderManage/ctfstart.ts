@@ -72,7 +72,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				await retireThread(interaction.guild as Guild, noticeThreadId);
 			}
 
-			// 현재 포럼 전체를 RETIRED로 이동 기록
 			try {
 				const forum = await getCurrentForumChannel(
 					interaction.guild as Guild
@@ -84,7 +83,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		}
 	}
 
-	// 큐에서 대상 제거 후 current로 승격
 	const updatedQueue = queue.filter((_, i) => i !== index);
 	(ctfQueueManager as any).queue = updatedQueue;
 	ctfQueueManager.saveQueue();

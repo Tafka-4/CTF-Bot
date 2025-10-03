@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { ChatInputCommandInteraction, PermissionFlagsBits } from "discord.js";
 import { serverDataStorage } from "../../utils/storage.js";
 import { ensureForumThreadContext } from "../../utils/interactionGuards.js";
+import { safeReply } from "../../utils/interactionResponses.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("delete-chall")
@@ -16,7 +17,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	const server = serverDataStorage.read();
 	const list = (server.problems?.[channelId] as any[]) ?? [];
 	if (list.length === 0) {
-		await interaction.editReply("No challenge found in this thread.");
+		await safeReply(interaction, "No challenge found in this thread.");
 		return;
 	}
 	const latest = list[0];
@@ -32,7 +33,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			)
 	);
 	if (latest.authorId !== interaction.user.id && !isAdmin) {
-		await interaction.editReply(
+		await safeReply(
+			interaction,
 			"Only the creator of this challenge or an admin can delete it."
 		);
 		return;
@@ -64,10 +66,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			string,
 			any
 		>;
-		const firstbloodByForum = { ...(cur.firstbloodByForum ?? {}) } as Record<
-			string,
-			any
-		>;
+		const firstbloodByForum = {
+			...(cur.firstbloodByForum ?? {}),
+		} as Record<string, any>;
 
 		delete problems[channelId];
 		delete clues[channelId];
@@ -103,5 +104,5 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		console.error("Failed to delete thread during delete-chall:", error);
 	}
 
-	await interaction.editReply("Challenge thread deleted.");
+	await safeReply(interaction, "Challenge thread deleted.");
 }

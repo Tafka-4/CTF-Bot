@@ -82,7 +82,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			.setFooter({ text: `Page ${p + 1}/${totalPages}` })
 			.setTimestamp(new Date());
 		if (slice.length === 0) {
-			embed.setDescription("No clues yet. Use the Add button below.");
+			embed.setDescription("No clues yet. Use /clue add to create one.");
 		} else {
 			for (let i = 0; i < slice.length; i++) {
 				const idx = p * pageSize + i;
@@ -105,13 +105,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				.setLabel("Next")
 				.setDisabled(totalPages <= 1)
 		);
-		const actionsRow = new (ActionRowBuilder as any)().addComponents(
-			new ButtonBuilder()
-				.setCustomId("clue-add")
-				.setLabel("Add Clue")
-				.setStyle(ButtonStyle.Primary)
-		);
-		const rows: any[] = [navRow, actionsRow];
+		const rows: any[] = [navRow];
 		if (slice.length > 0) {
 			const menu = new StringSelectMenuBuilder()
 				.setCustomId("clue-select")

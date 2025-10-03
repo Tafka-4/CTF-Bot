@@ -1,3 +1,6 @@
+import { EmbedBuilder } from "discord.js";
+import type { ModalSubmitInteraction } from "discord.js";
+
 import { ctfQueueManager } from "../../utils/ctfQueueManager.js";
 import { ctftimeToQueueItem } from "../../utils/ctftime.js";
 import {
@@ -346,3 +349,13 @@ export async function handleClueAddModal(interaction: any) {
 		});
 	}
 }
+
+export async function handleRevshellModal(
+	interaction: ModalSubmitInteraction
+) {
+	await interaction.reply({
+		content: "이 리버스 셸 기능은 더 이상 지원되지 않습니다.",
+		flags: 64,
+	}).catch(() => {});
+}
+

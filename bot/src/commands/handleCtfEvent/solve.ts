@@ -39,7 +39,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		const firstbloodInfo = cur.firstbloodInfo ?? {};
 		const contributors = cur.contributorsByThread?.[record.threadId] ?? [];
 
-		// 포럼 단위 퍼블 기록: 최초 한 번만, 이미 존재하면 더 이른 타임스탬프 우선
 		if (forumId) {
 			const fbForum = (cur as any).firstbloodByForum || {};
 			const existing = fbForum[forumId];
@@ -124,9 +123,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	);
 
 	try {
-		const summary = `${isForumFirst ? "**[FIRST BLOOD]** " : ""}Solved by <@${
-			record.solverId
-		}> at ${new Date(record.timestamp).toLocaleString()}`;
+		const summary = `${
+			isForumFirst ? "**[FIRST BLOOD]** " : ""
+		}Solved by <@${record.solverId}> at ${new Date(
+			record.timestamp
+		).toLocaleString()}`;
 		if (thread.isTextBased()) {
 			await (thread as any).send(summary);
 		}

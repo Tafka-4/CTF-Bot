@@ -8,31 +8,90 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export async function clearAllCommands() {
-	const rest = new REST({ version: "10" }).setToken(
-		process.env.DISCORD_BOT_TOKEN as string
-	);
+function getBotToken(): string {
+	const token = process.env.DISCORD_BOT_TOKEN ?? process.env.DISCORD_TOKEN;
+	if (!token || token.trim().length === 0) {
+		throw new Error(
+			"Missing Discord token. Set DISCORD_BOT_TOKEN (or DISCORD_TOKEN) in the environment."
+		);
+	}
+	return token;
+}
 
-	const clientId = process.env.DISCORD_BOT_CLIENT_ID as string;
-	const guildId = process.env.DISCORD_GUILD_ID as string | undefined;
+function getConfiguredApplicationId(): string | undefined {
+	return (
+		process.env.DISCORD_APPLICATION_ID ??
+		process.env.DISCORD_BOT_CLIENT_ID ??
+		process.env.DISCORD_CLIENT_ID ??
+		undefined
+	);
+}
+
+function getConfiguredGuildId(): string | undefined {
+	return (
+		process.env.DISCORD_GUILD_ID ??
+		process.env.DISCORD_TARGET_GUILD_ID ??
+		process.env.DISCORD_DEV_GUILD_ID ??
+		undefined
+	);
+}
+
+async function resolveApplicationId(rest: REST): Promise<string> {
+	const configuredId = getConfiguredApplicationId();
+	try {
+		const application = (await rest.get(
+			Routes.oauth2CurrentApplication()
+		)) as { id: string; name?: string };
+		if (configuredId && configuredId !== application.id) {
+			console.warn(
+				`Configured Discord application ID (${configuredId}) does not match the token's application ID (${application.id}). Using ${application.id}.`
+			);
+		}
+		return configuredId ?? application.id;
+	} catch (error) {
+		if (configuredId) {
+			console.warn(
+				"Could not confirm Discord application ID via API; falling back to configured ID.",
+				error
+			);
+			return configuredId;
+		}
+		throw error;
+	}
+}
+
+export async function clearAllCommands() {
+	let applicationId: string;
+	let rest: REST;
+	const guildId = getConfiguredGuildId();
+
+	try {
+		rest = new REST({ version: "10" }).setToken(getBotToken());
+		applicationId = await resolveApplicationId(rest);
+	} catch (error) {
+		console.error("Unable to initialise Discord REST client:", error);
+		return false;
+	}
 
 	console.log("clearing all slash commands...");
 
 	let success = true;
 
 	try {
-		await rest.put(Routes.applicationCommands(clientId), { body: [] });
+		await rest.put(Routes.applicationCommands(applicationId), { body: [] });
 		console.log("Global slash commands cleared.");
 	} catch (error) {
 		console.error("Failed to clear global commands:", error);
-		success = false;
 	}
 
 	if (guildId) {
 		try {
-			await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
-				body: [],
-			});
+			await rest.put(
+				Routes.applicationGuildCommands(applicationId, guildId),
+				{
+					body: [],
+				}
+			);
 			console.log("Guild slash commands cleared.");
 		} catch (error: any) {
 			if (error && (error.code === 50001 || error.status === 403)) {
@@ -76,30 +135,28 @@ export async function deployCommands() {
 			}
 		}
 
-		const rest = new REST({ version: "10" }).setToken(
-			process.env.DISCORD_BOT_TOKEN as string
-		);
+		const rest = new REST({ version: "10" }).setToken(getBotToken());
+		const applicationId = await resolveApplicationId(rest);
+		const guildId = getConfiguredGuildId();
+
+		if (!guildId) {
+			console.warn(
+				"No Discord guild ID configured; skipping slash command deployment."
+			);
+			return false;
+		}
 
 		console.log(`deploy slash commands... (${commands.length} commands)`);
 
-		// Global deploy
+		// Global deploy can be re-enabled when required.
 		/*
-		await rest.put(
-			Routes.applicationCommands(
-				process.env.DISCORD_BOT_CLIENT_ID as string
-			),
-			{
-				body: commands,
-			}
-		);
+		await rest.put(Routes.applicationCommands(applicationId), {
+			body: commands,
+		});
 		*/
 
-		// Debug deploy
 		await rest.put(
-			Routes.applicationGuildCommands(
-				process.env.DISCORD_BOT_CLIENT_ID as string,
-				process.env.DISCORD_GUILD_ID as string
-			),
+			Routes.applicationGuildCommands(applicationId, guildId),
 			{
 				body: commands,
 			}
@@ -115,7 +172,13 @@ export async function deployCommands() {
 
 export async function redeployCommands(clearFirst = false) {
 	if (clearFirst) {
-		await clearAllCommands();
+		const cleared = await clearAllCommands();
+		if (!cleared) {
+			console.warn(
+				"Skipping slash command redeploy because clearing existing commands failed."
+			);
+			return false;
+		}
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
 	return await deployCommands();
