@@ -19,15 +19,7 @@ function normaliseBaseUrl(url: string): string {
 }
 
 function resolveBaseUrl(): string {
-	const configured = [
-		process.env.REVSHELL_HTTP_BASE_URL,
-		process.env.REVSHELL_HTTP_URL,
-		process.env.REVSHELL_SERVICE_URL,
-		process.env.REVSHELL_INTERNAL_URL,
-		process.env.REVSHELL_BASE_URL,
-	]
-		.map((value) => value?.trim())
-		.find((value) => value && value.length > 0);
+	const configured = process.env.REVSHELL_HTTP_BASE_URL?.trim();
 	if (configured) return normaliseBaseUrl(configured);
 	const env = (process.env.NODE_ENV ?? "").toLowerCase();
 	if (env === "development" || env === "dev") return "http://localhost:8000";
@@ -230,3 +222,5 @@ export async function closeRevshellPairing(
 ): Promise<RevshellPairingSummary> {
 	return await defaultRevshellClient.close(key);
 }
+
+export type { RevshellPairingSummary, RevshellLogEntry } from "./types.js";

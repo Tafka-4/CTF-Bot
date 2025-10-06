@@ -9,31 +9,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function getBotToken(): string {
-	const token = process.env.DISCORD_BOT_TOKEN ?? process.env.DISCORD_TOKEN;
+	const token = process.env.DISCORD_BOT_TOKEN;
 	if (!token || token.trim().length === 0) {
 		throw new Error(
-			"Missing Discord token. Set DISCORD_BOT_TOKEN (or DISCORD_TOKEN) in the environment."
+			"Missing Discord token. Set DISCORD_BOT_TOKEN in the environment."
 		);
 	}
 	return token;
 }
 
 function getConfiguredApplicationId(): string | undefined {
-	return (
-		process.env.DISCORD_APPLICATION_ID ??
-		process.env.DISCORD_BOT_CLIENT_ID ??
-		process.env.DISCORD_CLIENT_ID ??
-		undefined
-	);
+	return process.env.DISCORD_BOT_CLIENT_ID;
 }
 
 function getConfiguredGuildId(): string | undefined {
-	return (
-		process.env.DISCORD_GUILD_ID ??
-		process.env.DISCORD_TARGET_GUILD_ID ??
-		process.env.DISCORD_DEV_GUILD_ID ??
-		undefined
-	);
+	return process.env.DISCORD_GUILD_ID;
 }
 
 async function resolveApplicationId(rest: REST): Promise<string> {

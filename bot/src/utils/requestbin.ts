@@ -54,10 +54,7 @@ export type CreateRequestBinInput = {
 };
 
 function getServiceBaseUrl(): string {
-	const configured =
-		process.env.REQUESTBIN_SERVICE_URL ||
-		process.env.REQUESTBIN_INTERNAL_URL ||
-		process.env.REQUESTBIN_BASE_URL;
+	const configured = process.env.REQUESTBIN_SERVICE_URL;
 
 	if (configured) {
 		return configured.endsWith("/") ? configured.slice(0, -1) : configured;

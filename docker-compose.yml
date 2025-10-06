@@ -8,10 +8,10 @@ services:
       - DISCORD_BOT_CLIENT_ID=${DISCORD_BOT_CLIENT_ID}
       - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
       - DOMAIN=${DOMAIN}
-      - REQUESTBIN_SERVICE_URL=http://requestbin:3000
-      - REVSHELL_HTTP_BASE_URL=http://revshell-session.taildb374e.ts.net:8000
-      - REVSHELL_TCP_HOST=revshell-session.taildb374e.ts.net
-      - REVSHELL_TCP_PORT=3000
+      - REQUESTBIN_SERVICE_URL=${REQUESTBIN_SERVICE_URL}
+      - REVSHELL_HTTP_BASE_URL=${REVSHELL_HTTP_BASE_URL}
+      - REVSHELL_TCP_HOST=${REVSHELL_TCP_HOST}
+      - REVSHELL_TCP_PORT=${REVSHELL_TCP_PORT}
   requestbin:
     build:
       context: ./requestbin
