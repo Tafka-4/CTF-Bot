@@ -7,8 +7,8 @@ import type { PairingRole, PairingStore } from "../pairingStore.js";
 export type HttpServerConfig = {
 	httpHost: string;
 	httpPort: number;
-	tunnelHostname?: string;
-	tunnelPublicPort: number;
+	accessHostname?: string;
+	accessPort: number;
 	statusSummary: () => { active: number; total: number };
 	store: PairingStore;
 };
@@ -36,8 +36,8 @@ export function createHttpServer(config: HttpServerConfig) {
 			...(label !== undefined ? { label } : {}),
 		});
 		const hostCandidate =
-			config.tunnelHostname ?? process.env.DOMAIN ?? "127.0.0.1";
-		const portCandidate = config.tunnelPublicPort;
+			config.accessHostname ?? process.env.DOMAIN ?? "127.0.0.1";
+		const portCandidate = config.accessPort;
 		const commands = config.store.buildCommandExamples(
 			pairing.key,
 			hostCandidate,
@@ -130,14 +130,14 @@ export function createHttpServer(config: HttpServerConfig) {
 	});
 
 	app.get("/", (_req, res) => {
-		const host = config.tunnelHostname ?? process.env.DOMAIN ?? "127.0.0.1";
+		const host = config.accessHostname ?? process.env.DOMAIN ?? "127.0.0.1";
 		res.json({
 			service: "CTF Reverse Shell Relay",
 			description:
 				"Pairs operator and target clients using a session key and relays traffic.",
 			listener: {
 				host,
-				port: config.tunnelPublicPort,
+				port: config.accessPort,
 			},
 		});
 	});

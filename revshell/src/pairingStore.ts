@@ -58,15 +58,19 @@ export class PairingStore {
 		this.maxBufferCacheSize = maxBufferCacheBytes;
 	}
 
-	create(input: { ownerUserId?: string; label?: string }): PairingSummary {
+	create(input: {
+		ownerUserId?: string | null;
+		label?: string | null;
+	}): PairingSummary {
 		const key = randomUUID().replace(/-/g, "").slice(0, 16);
 		const now = new Date().toISOString();
+		const { ownerUserId, label } = input;
 		const pairing: Pairing = {
 			key,
-			...(input.ownerUserId !== undefined
-				? { ownerUserId: input.ownerUserId }
+			...(typeof ownerUserId === "string" && ownerUserId.length > 0
+				? { ownerUserId }
 				: {}),
-			...(input.label !== undefined ? { label: input.label } : {}),
+			...(typeof label === "string" && label.length > 0 ? { label } : {}),
 			createdAt: now,
 			lastActivityAt: now,
 			status: "waiting",

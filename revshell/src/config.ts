@@ -4,8 +4,8 @@ export type ServiceConfig = {
 	shellPort: number;
 	shellHost: string;
 	maxBufferSize: number;
-	tunnelHostname?: string;
-	tunnelPublicPort: number;
+	accessHostname?: string;
+	accessPort: number;
 	cloudflaredDownloadBase: string;
 	clientProxyHost: string;
 	clientProxyPort: number;
@@ -47,14 +47,20 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServiceConfig {
 		256 * 1024,
 		"REVSHELL_MAX_BUFFER_BYTES"
 	);
-	const tunnelHostname =
+	const accessHostname =
 		env.REVSHELL_ACCESS_HOSTNAME?.trim() ||
 		(env.DOMAIN ? `revshell.${env.DOMAIN.trim()}` : undefined);
-	const tunnelPublicPort = parsePositiveInt(
-		env.REVSHELL_PUBLIC_PORT,
-		443,
-		"REVSHELL_PUBLIC_PORT"
-	);
+	const accessPort = (() => {
+		const explicit = env.REVSHELL_ACCESS_PORT?.trim();
+		if (explicit) {
+			return parsePositiveInt(
+				explicit,
+				shellPort,
+				"REVSHELL_ACCESS_PORT"
+			);
+		}
+		return shellPort;
+	})();
 	const downloadBase = normaliseUrlBase(
 		env.REVSHELL_CLOUDFLARED_DOWNLOAD_BASE?.trim() ??
 			"https://github.com/cloudflare/cloudflared/releases/latest/download"
@@ -92,12 +98,12 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServiceConfig {
 		shellPort,
 		shellHost,
 		maxBufferSize,
-		...(tunnelHostname !== undefined ? { tunnelHostname } : {}),
-		tunnelPublicPort,
+		accessPort,
 		cloudflaredDownloadBase: downloadBase,
 		clientProxyHost,
 		clientProxyPort,
 		pairingTtlMs,
 		closedRetentionMs,
+		...(accessHostname !== undefined ? { accessHostname } : {}),
 	};
 }
