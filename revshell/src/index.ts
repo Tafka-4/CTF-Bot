@@ -15,7 +15,9 @@ const { server: httpServer } = createHttpServer({
 	store,
 	httpHost: config.httpHost,
 	httpPort: config.httpPort,
-	tunnelHostname: config.tunnelHostname,
+	...(config.tunnelHostname !== undefined
+		? { tunnelHostname: config.tunnelHostname }
+		: {}),
 	tunnelPublicPort: config.tunnelPublicPort,
 	statusSummary: () => store.statusSummary(),
 });

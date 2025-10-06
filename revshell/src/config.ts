@@ -92,7 +92,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServiceConfig {
 		shellPort,
 		shellHost,
 		maxBufferSize,
-		tunnelHostname,
+		...(tunnelHostname !== undefined ? { tunnelHostname } : {}),
 		tunnelPublicPort,
 		cloudflaredDownloadBase: downloadBase,
 		clientProxyHost,

@@ -63,8 +63,10 @@ export class PairingStore {
 		const now = new Date().toISOString();
 		const pairing: Pairing = {
 			key,
-			ownerUserId: input.ownerUserId,
-			label: input.label,
+			...(input.ownerUserId !== undefined
+				? { ownerUserId: input.ownerUserId }
+				: {}),
+			...(input.label !== undefined ? { label: input.label } : {}),
 			createdAt: now,
 			lastActivityAt: now,
 			status: "waiting",

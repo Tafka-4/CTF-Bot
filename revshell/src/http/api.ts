@@ -1,4 +1,6 @@
-import express, { NextFunction, Request, Response, Router } from "express";
+import express, { Router } from "express";
+
+import type { NextFunction, Request, Response } from "express";
 
 import type { PairingRole, PairingStore } from "../pairingStore.js";
 
@@ -29,7 +31,10 @@ export function createHttpServer(config: HttpServerConfig) {
 			ownerUserId?: string;
 			label?: string;
 		};
-		const pairing = config.store.create({ ownerUserId, label });
+		const pairing = config.store.create({
+			...(ownerUserId !== undefined ? { ownerUserId } : {}),
+			...(label !== undefined ? { label } : {}),
+		});
 		const hostCandidate =
 			config.tunnelHostname ?? process.env.DOMAIN ?? "127.0.0.1";
 		const portCandidate = config.tunnelPublicPort;
