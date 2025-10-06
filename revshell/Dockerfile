@@ -4,11 +4,9 @@ WORKDIR /app
 
 RUN apk add --no-cache curl
 
-COPY package.json .
+COPY package.json package-lock.json ./
 
-RUN npm install -g typescript
-
-RUN npm install
+RUN npm ci && npm install -g typescript
 
 RUN curl -fsSL -o /usr/local/bin/cloudflared \
   https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
@@ -18,6 +16,6 @@ COPY . .
 
 RUN chmod +x /app/entrypoint.sh
 
-EXPOSE 3002
+EXPOSE 8000
 
 ENTRYPOINT ["/app/entrypoint.sh"]

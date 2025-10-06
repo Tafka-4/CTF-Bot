@@ -7,7 +7,7 @@ import {
 	closeRevshellPairing,
 	type RevshellPairingSummary,
 	type RevshellLogEntry,
-} from "../utils/revshell.js";
+} from "../utils/revshell/client.js";
 import {
 	serverDataStorage,
 	type RevshellUserRecord,
@@ -35,7 +35,11 @@ function upsertRevshellUserRecord(
 		};
 		if (existing) {
 			for (const [key, value] of Object.entries(existing)) {
-				if (key === "ownerUserId" || key === "createdAt" || key === "updatedAt")
+				if (
+					key === "ownerUserId" ||
+					key === "createdAt" ||
+					key === "updatedAt"
+				)
 					continue;
 				(next as any)[key] = value;
 			}
@@ -90,7 +94,9 @@ function buildPairingEmbed(
 			.map(
 				(log) =>
 					`[#${log.seq} • ${log.source}] ${
-						log.preview.length > 0 ? log.preview : `<${log.size} bytes>`
+						log.preview.length > 0
+							? log.preview
+							: `<${log.size} bytes>`
 					}`
 			)
 			.join("\n");
@@ -112,9 +118,7 @@ export const data = new SlashCommandBuilder()
 			.setName("status")
 			.setDescription("세션 상태를 확인합니다")
 			.addStringOption((opt) =>
-				opt
-					.setName("key")
-					.setDescription("확인할 세션 키")
+				opt.setName("key").setDescription("확인할 세션 키")
 			)
 	)
 	.addSubcommand((sub) =>
@@ -122,9 +126,7 @@ export const data = new SlashCommandBuilder()
 			.setName("close")
 			.setDescription("세션을 종료합니다")
 			.addStringOption((opt) =>
-				opt
-					.setName("key")
-					.setDescription("종료할 세션 키")
+				opt.setName("key").setDescription("종료할 세션 키")
 			)
 	);
 
@@ -163,7 +165,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 						value: "`openssl s_client -quiet` 대신 `ncat --ssl` 등 TLS 지원 도구를 사용해도 됩니다.",
 					}
 				)
-				.setFooter({ text: "첫 줄에 AUTH <key> <role> 을 보내야 연결됩니다" })
+				.setFooter({
+					text: "첫 줄에 AUTH <key> <role> 을 보내야 연결됩니다",
+				})
 				.setTimestamp(new Date(pairing.createdAt));
 
 			const threadId =
@@ -171,7 +175,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 					? interaction.channelId
 					: undefined;
 			const patch: Partial<
-				Omit<RevshellUserRecord, "ownerUserId" | "createdAt" | "updatedAt">
+				Omit<
+					RevshellUserRecord,
+					"ownerUserId" | "createdAt" | "updatedAt"
+				>
 			> = {
 				lastChannelId: interaction.channelId,
 				lastPairingKey: pairing.key,
@@ -241,7 +248,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			const pairing = await closeRevshellPairing(targetKey);
 			const embed = buildPairingEmbed(pairing);
 			const patch: Partial<
-				Omit<RevshellUserRecord, "ownerUserId" | "createdAt" | "updatedAt">
+				Omit<
+					RevshellUserRecord,
+					"ownerUserId" | "createdAt" | "updatedAt"
+				>
 			> = {};
 			if (record?.lastPairingKey && record.lastPairingKey !== targetKey) {
 				patch.lastPairingKey = record.lastPairingKey;

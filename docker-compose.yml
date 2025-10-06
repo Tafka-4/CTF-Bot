@@ -9,7 +9,9 @@ services:
       - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
       - DOMAIN=${DOMAIN}
       - REQUESTBIN_SERVICE_URL=http://requestbin:3000
-      - REVSHELL_SERVICE_URL=http://revshell:3002
+      - REVSHELL_HTTP_BASE_URL=http://revshell-session.taildb374e.ts.net:8000
+      - REVSHELL_TCP_HOST=revshell-session.taildb374e.ts.net
+      - REVSHELL_TCP_PORT=3000
   requestbin:
     build:
       context: ./requestbin
@@ -26,15 +28,3 @@ services:
     environment:
       - TUNNEL_TRANSPORT_PROTOCOL=http2
     command: tunnel --no-autoupdate run --token ${REQBIN_TUNNEL_TOKEN}
-  revshell:
-    build:
-      context: ./revshell
-      dockerfile: Dockerfile
-    expose:
-      - 3002
-    environment:
-      - HTTP_PORT=3002
-      - REVSHELL_LISTEN_PORT=9001
-      - DOMAIN=${DOMAIN}
-      - TUNNEL_TRANSPORT_PROTOCOL=http2
-      - REVSHELL_TUNNEL_TOKEN=${REVSHELL_TUNNEL_TOKEN}

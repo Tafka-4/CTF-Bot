@@ -1,0 +1,18 @@
+services:
+  revshell:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+      - "3000:3000"
+    environment:
+      - HTTP_PORT=8000
+      - REVSHELL_LISTEN_PORT=3000
+      - REVSHELL_MAX_BUFFER_BYTES=262144
+      - REVSHELL_PAIRING_TTL_MINUTES=30
+      - REVSHELL_PAIRING_CLOSED_RETENTION_MINUTES=10
+      - REVSHELL_PUBLIC_PORT=443
+      - REVSHELL_CLIENT_PROXY_PORT=9210
+    restart: unless-stopped
+
