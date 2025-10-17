@@ -372,17 +372,29 @@ export class PairingStore {
 			"reason",
 			reason
 		);
+		const now = new Date().toISOString();
+		if (pairing.status === "closed") {
+			pairing.lastActivityAt = now;
+			return;
+		}
 		const { operator, target } = pairing.sockets;
 		if (operator && target) {
 			pairing.status = "bridged";
-		} else if (operator) {
-			pairing.status = "operator_connected";
-		} else if (target) {
-			pairing.status = "target_connected";
-		} else {
-			pairing.status = "waiting";
-			this.close(pairing.key, reason);
+			pairing.lastActivityAt = now;
+			return;
 		}
-		pairing.lastActivityAt = new Date().toISOString();
+		if (operator) {
+			pairing.status = "operator_connected";
+			pairing.lastActivityAt = now;
+			return;
+		}
+		if (target) {
+			pairing.status = "target_connected";
+			pairing.lastActivityAt = now;
+			return;
+		}
+		pairing.status = "waiting";
+		pairing.lastActivityAt = now;
+		this.close(pairing.key, reason);
 	}
 }
