@@ -32,6 +32,10 @@ export function createHttpServer(config: HttpServerConfig) {
 			ownerUserId?: string;
 			label?: string;
 		};
+		console.log("HTTP POST /pairings", {
+			ownerUserId: ownerUserId ?? null,
+			label: label ?? null,
+		});
 		const pairing = config.store.create({
 			...(ownerUserId !== undefined ? { ownerUserId } : {}),
 			...(label !== undefined ? { label } : {}),
@@ -89,6 +93,12 @@ export function createHttpServer(config: HttpServerConfig) {
 			text?: string;
 			base64?: string;
 		};
+		console.log("HTTP POST send", {
+			key: req.params.key,
+			role,
+			hasText: typeof text === "string" && text.length > 0,
+			hasBase64: typeof base64 === "string" && base64.length > 0,
+		});
 		if (role !== "operator" && role !== "target") {
 			res.status(400).json({ error: "INVALID_ROLE" });
 			return;
@@ -114,6 +124,7 @@ export function createHttpServer(config: HttpServerConfig) {
 	});
 
 	router.post("/:key/close", (req, res) => {
+		console.log("HTTP POST close", { key: req.params.key });
 		const summary = config.store.getSummary(req.params.key);
 		if (!summary) {
 			res.status(404).json({ error: "PAIRING_NOT_FOUND" });

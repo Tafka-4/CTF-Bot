@@ -67,8 +67,12 @@ export function createTcpListener(config: TcpListenerConfig) {
 				pairingKey = keyValue;
 				role = roleValue as PairingRole;
 				cleanup();
-				console.log("Handshake complete", keyValue, role);
-				console.log("Remaining", remaining);
+				console.log(
+					"Reverse shell handshake complete",
+					keyValue,
+					role,
+					`initial=${remaining.length} bytes`
+				);
 				const registerResult = config.store.registerSocket(
 					keyValue,
 					role,
@@ -76,6 +80,12 @@ export function createTcpListener(config: TcpListenerConfig) {
 					remaining
 				);
 				if (!registerResult.ok) {
+					console.warn(
+						"Reverse shell registerSocket failed",
+						keyValue,
+						role,
+						registerResult
+					);
 					socket.destroy();
 				}
 				return;
@@ -84,10 +94,25 @@ export function createTcpListener(config: TcpListenerConfig) {
 
 		socket.on("close", () => {
 			cleanup();
+			if (pairingKey && role) {
+				console.log(
+					"Reverse shell socket closed",
+					pairingKey,
+					role
+				);
+			}
 		});
 
-		socket.on("error", () => {
+		socket.on("error", (error) => {
 			cleanup();
+			if (pairingKey && role) {
+				console.warn(
+					"Reverse shell socket error",
+					pairingKey,
+					role,
+					error
+				);
+			}
 		});
 	});
 

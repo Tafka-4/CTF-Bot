@@ -11,6 +11,14 @@ const config = loadConfig(process.env);
 
 const store = new PairingStore(config.maxBufferSize);
 
+console.log("Reverse shell config", {
+	httpPort: config.httpPort,
+	shellPort: config.shellPort,
+	maxBufferSize: config.maxBufferSize,
+	pairingTtlMs: config.pairingTtlMs,
+	closedRetentionMs: config.closedRetentionMs,
+});
+
 const { server: httpServer } = createHttpServer({
 	store,
 	httpHost: config.httpHost,

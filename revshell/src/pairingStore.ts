@@ -63,6 +63,11 @@ export class PairingStore {
 		label?: string | null;
 	}): PairingSummary {
 		const key = randomUUID().replace(/-/g, "").slice(0, 16);
+		console.log("PairingStore.create", {
+			key,
+			ownerUserId: input.ownerUserId ?? null,
+			label: input.label ?? null,
+		});
 		const now = new Date().toISOString();
 		const { ownerUserId, label } = input;
 		const pairing: Pairing = {
@@ -134,6 +139,11 @@ export class PairingStore {
 			} as const;
 		try {
 			socket.write(payload);
+			console.log("PairingStore.send", {
+				key,
+				role,
+				bytes: payload.length,
+			});
 			this.log(pairing, this.otherRole(role), payload);
 			pairing.lastActivityAt = new Date().toISOString();
 			return { ok: true } as const;
@@ -149,6 +159,7 @@ export class PairingStore {
 	close(key: string, reason: string) {
 		const pairing = this.pairings.get(key);
 		if (!pairing || pairing.status === "closed") return;
+		console.log("PairingStore.close", { key, reason });
 		pairing.status = "closed";
 		pairing.closeReason = reason;
 		pairing.closedAt = new Date().toISOString();
@@ -179,6 +190,10 @@ export class PairingStore {
 		}
 		const existing = pairing.sockets[role];
 		if (existing && !existing.destroyed) {
+			console.warn("PairingStore.registerSocket role already connected", {
+				key: pairingKey,
+				role,
+			});
 			socket.destroy();
 			return { ok: false, error: "ROLE_ALREADY_CONNECTED" } as const;
 		}
@@ -192,6 +207,14 @@ export class PairingStore {
 			const { operator, target } = pairing.sockets;
 			if (operator && target) pairing.status = "bridged";
 		}
+
+		console.log("PairingStore.registerSocket success", {
+			key: pairingKey,
+			role,
+			status: pairing.status,
+			hasOperator: Boolean(pairing.sockets.operator),
+			hasTarget: Boolean(pairing.sockets.target),
+		});
 
 		if (initialData.length > 0) {
 			this.buffer(pairing, this.otherRole(role), initialData);
@@ -224,6 +247,10 @@ export class PairingStore {
 					pairing.closedAt &&
 					now - Date.parse(pairing.closedAt) > closedRetentionMs
 				) {
+					console.log("PairingStore.cleanup: removing closed pairing", {
+						key: pairing.key,
+						closedAt: pairing.closedAt,
+					});
 					this.pairings.delete(pairing.key);
 				}
 				continue;
@@ -337,6 +364,14 @@ export class PairingStore {
 		reason: string
 	) {
 		delete pairing.sockets[role];
+		console.log(
+			"Socket closed for role",
+			role,
+			"pairing",
+			pairing.key,
+			"reason",
+			reason
+		);
 		const { operator, target } = pairing.sockets;
 		if (operator && target) {
 			pairing.status = "bridged";
