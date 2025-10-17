@@ -202,7 +202,7 @@ export class PairingStore {
 			if (chunk.length === 0) return;
 			pairing.lastActivityAt = new Date().toISOString();
 			this.log(pairing, role, chunk);
-			this.forward(pairing, role, chunk);
+			this.forward(pairing, this.otherRole(role), chunk);
 		});
 
 		socket.on("close", () =>
