@@ -20,7 +20,8 @@ The project is split into two runtimes:
 
 - Copy `env.example` to `.env` and populate the required secrets before running `docker compose up`.
 - Point `REVSHELL_ACCESS_HOSTNAME` at a dedicated reverse-shell domain (for example `revshell.example.com` or your Tailscale DNS name); the service shares this host in generated commands.
-- Ensure the listener port you expose (`REVSHELL_TCP_PORT`, defaults to `3000`) is reachable from that hostname.
+- `REVSHELL_ACCESS_PORT` is the port advertised to operators/targets (defaults to `3000`); keep it aligned with your public tunnel or Tailscale funnel configuration.
+- `REVSHELL_TCP_BIND_PORT` sets the host port that Docker binds to the reverse-shell listener (defaults to `3000`); change it if another process already occupies that port and point your tunnel at the new value (e.g. `tailscale funnel --tcp 3000 tcp://localhost:3300`).
 - `REVSHELL_HTTP_PORT` controls the host port used to reach the revshell REST API (defaults to `8000`).
 - Adjust `REVSHELL_HTTP_BASE_URL`/`REVSHELL_TCP_HOST` if you deploy the revshell service somewhere other than the bundled container.
 
