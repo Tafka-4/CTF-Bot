@@ -15,6 +15,8 @@ console.log("Reverse shell config", {
 	httpPort: config.httpPort,
 	shellPort: config.shellPort,
 	maxBufferSize: config.maxBufferSize,
+	authTimeoutMs: config.authTimeoutMs,
+	maxHandshakeBytes: config.maxHandshakeBytes,
 	pairingTtlMs: config.pairingTtlMs,
 	closedRetentionMs: config.closedRetentionMs,
 });
@@ -33,6 +35,8 @@ const tcpServer = createTcpListener({
 	store,
 	shellHost: config.shellHost,
 	shellPort: config.shellPort,
+	authTimeoutMs: config.authTimeoutMs,
+	maxHandshakeBytes: config.maxHandshakeBytes,
 });
 
 setInterval(() => {

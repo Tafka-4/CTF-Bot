@@ -23,6 +23,8 @@ The project is split into two runtimes:
 - `REVSHELL_ACCESS_PORT` is the port advertised to operators/targets (defaults to `3000`); keep it aligned with your public tunnel or Tailscale funnel configuration.
 - `REVSHELL_TCP_BIND_PORT` sets the host port that Docker binds to the reverse-shell listener (defaults to `3000`); change it if another process already occupies that port and point your tunnel at the new value (e.g. `tailscale funnel --tcp 3000 tcp://localhost:3300`).
 - `REVSHELL_ACCESS_TLS` controls whether generated commands default to TLS (`openssl s_client`) or plain TCP (`nc`). Set it to `true` when your ingress (Cloudflare Tunnel, Tailscale Funnel with TLS, etc.) expects a TLS handshake.
+- `REVSHELL_AUTH_TIMEOUT_SECONDS` adjusts how long the TCP listener waits for the initial `AUTH <key> <role>` line before closing a connection (defaults to 30 seconds). Increase it if operators/targets frequently connect manually and need more time before authenticating.
+- `REVSHELL_HANDSHAKE_MAX_BYTES` caps the size of the initial handshake buffer (defaults to `2048` bytes); tune it if your proxy inserts banners or metadata ahead of the auth line.
 - `REVSHELL_HTTP_PORT` controls the host port used to reach the revshell REST API (defaults to `8000`).
 - Slash command output mirrors `REVSHELL_ACCESS_TLS`: 버튼으로 `Plain`/`TLS` 모드를 전환해 필요한 명령만 볼 수 있습니다.
 - Adjust `REVSHELL_HTTP_BASE_URL`/`REVSHELL_TCP_HOST` if you deploy the revshell service somewhere other than the bundled container.

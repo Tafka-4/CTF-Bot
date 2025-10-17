@@ -3,6 +3,8 @@ export type ServiceConfig = {
 	httpHost: string;
 	shellPort: number;
 	shellHost: string;
+	authTimeoutMs: number;
+	maxHandshakeBytes: number;
 	maxBufferSize: number;
 	accessHostname: string;
 	accessPort: number;
@@ -24,6 +26,20 @@ function parsePositiveInt(
 	const parsed = Number.parseInt(trimmed, 10);
 	if (!Number.isFinite(parsed) || parsed <= 0) {
 		throw new Error(`${label} must be a positive integer`);
+	}
+	return parsed;
+}
+
+function parseNonNegativeInt(
+	value: string | undefined,
+	fallback: number,
+	label: string
+) {
+	const trimmed = value?.trim();
+	if (!trimmed) return fallback;
+	const parsed = Number.parseInt(trimmed, 10);
+	if (!Number.isFinite(parsed) || parsed < 0) {
+		throw new Error(`${label} must be a non-negative integer`);
 	}
 	return parsed;
 }
@@ -56,6 +72,17 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServiceConfig {
 		env.REVSHELL_MAX_BUFFER_BYTES,
 		256 * 1024,
 		"REVSHELL_MAX_BUFFER_BYTES"
+	);
+	const authTimeoutMs =
+		parseNonNegativeInt(
+			env.REVSHELL_AUTH_TIMEOUT_SECONDS,
+			30,
+			"REVSHELL_AUTH_TIMEOUT_SECONDS"
+		) * 1000;
+	const maxHandshakeBytes = parsePositiveInt(
+		env.REVSHELL_HANDSHAKE_MAX_BYTES,
+		2048,
+		"REVSHELL_HANDSHAKE_MAX_BYTES"
 	);
 	const accessHostnameCandidate =
 		env.REVSHELL_ACCESS_HOSTNAME?.trim() ||
@@ -124,5 +151,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServiceConfig {
 		pairingTtlMs,
 		closedRetentionMs,
 		accessHostname,
+		authTimeoutMs,
+		maxHandshakeBytes,
 	};
 }
