@@ -64,6 +64,11 @@ export function createTcpListener(config: TcpListenerConfig) {
 		socket.on("data", (chunk: Buffer) => {
 			if (!handshakeComplete) {
 				buffer = Buffer.concat([buffer, chunk]);
+				console.log("[TCP]", connectionId, "handshake chunk", {
+					bytes: chunk.length,
+					totalBuffered: buffer.length,
+					preview: previewBuffer(chunk),
+				});
 				if (buffer.length > maxHandshakeBytes) {
 					console.warn("[TCP]", connectionId, "handshake overflow", {
 						maxHandshakeBytes,
@@ -154,6 +159,7 @@ export function createTcpListener(config: TcpListenerConfig) {
 				key: pairingKey,
 				role,
 				handshakeComplete,
+				bufferedBytes: buffer.length,
 			});
 		});
 
