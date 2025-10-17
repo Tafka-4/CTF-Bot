@@ -19,9 +19,17 @@ export type RevshellPairingSummary = {
 	logCount: number;
 };
 
-export type RevshellCommands = {
+export type RevshellCommandMode = "plain" | "tls";
+
+export type RevshellCommandSet = {
 	operator: string;
 	target: string;
+};
+
+export type RevshellCommandVariants = {
+	defaultMode: RevshellCommandMode;
+	plain: RevshellCommandSet;
+	tls: RevshellCommandSet;
 };
 
 export type RevshellConnectionInfo = {
@@ -29,12 +37,13 @@ export type RevshellConnectionInfo = {
 	port: number;
 	internalHost?: string;
 	internalPort?: number;
+	useTls?: boolean;
 };
 
 export type RevshellCreateResponse = {
 	pairing: RevshellPairingSummary;
 	connection: RevshellConnectionInfo;
-	commands: RevshellCommands;
+	commands: RevshellCommandVariants;
 };
 
 export type RevshellLogEntry = {

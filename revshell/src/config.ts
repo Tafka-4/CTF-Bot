@@ -6,6 +6,7 @@ export type ServiceConfig = {
 	maxBufferSize: number;
 	accessHostname: string;
 	accessPort: number;
+	accessUseTls: boolean;
 	cloudflaredDownloadBase: string;
 	clientProxyHost: string;
 	clientProxyPort: number;
@@ -29,6 +30,15 @@ function parsePositiveInt(
 
 function normaliseUrlBase(value: string): string {
 	return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+function parseBoolean(value: string | undefined, label: string) {
+	if (value === undefined) return undefined;
+	const normalised = value.trim().toLowerCase();
+	if (normalised === "") return undefined;
+	if (["1", "true", "yes", "on"].includes(normalised)) return true;
+	if (["0", "false", "no", "off"].includes(normalised)) return false;
+	throw new Error(`${label} must be a boolean-like value (true/false)`);
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv): ServiceConfig {
@@ -71,6 +81,8 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServiceConfig {
 		env.REVSHELL_CLOUDFLARED_DOWNLOAD_BASE?.trim() ??
 			"https://github.com/cloudflare/cloudflared/releases/latest/download"
 	);
+	const accessUseTls =
+		parseBoolean(env.REVSHELL_ACCESS_TLS, "REVSHELL_ACCESS_TLS") ?? false;
 	const clientProxyPort = parsePositiveInt(
 		env.REVSHELL_CLIENT_PROXY_PORT,
 		9210,
@@ -105,6 +117,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServiceConfig {
 		shellHost,
 		maxBufferSize,
 		accessPort,
+		accessUseTls,
 		cloudflaredDownloadBase: downloadBase,
 		clientProxyHost,
 		clientProxyPort,

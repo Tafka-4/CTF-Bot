@@ -12,6 +12,14 @@ import {
 	serverDataStorage,
 	type RevshellUserRecord,
 } from "../utils/storage.js";
+import {
+	setRevshellCommandCache,
+	deleteRevshellCommandCache,
+} from "../utils/revshell/commandCache.js";
+import {
+	buildRevshellCommandComponents,
+	buildRevshellCommandEmbed,
+} from "../utils/revshell/ui.js";
 
 function getRevshellUserRecord(userId: string): RevshellUserRecord | undefined {
 	const map = serverDataStorage.read().revshellByUser ?? {};
@@ -140,35 +148,24 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				ownerUserId: interaction.user.id,
 			});
 			const { pairing, connection, commands } = response;
-			const embed = new EmbedBuilder()
-				.setTitle("🔑 Reverse Shell Session Ready")
-				.setColor(0x1abc9c)
-				.addFields(
-					{
-						name: "Session Key",
-						value: `\`${pairing.key}\``,
-					},
-					{
-						name: "Listener",
-						value: `${connection.host}:${connection.port}`,
-					},
-					{
-						name: "Operator",
-						value: `\`\`\`bash\n${commands.operator}\n\`\`\``,
-					},
-					{
-						name: "Target",
-						value: `\`\`\`bash\n${commands.target}\n\`\`\``,
-					},
-					{
-						name: "TLS tip",
-						value: "기본 명령은 `nc`로 평문 TCP에 연결합니다. 공개 서비스 등에서 TLS가 필요하면 명령 하단의 주석에 있는 `openssl s_client` 예시로 교체하세요.",
-					}
-				)
-				.setFooter({
-					text: "첫 줄에 AUTH <key> <role> 을 보내야 연결됩니다",
-				})
-				.setTimestamp(new Date(pairing.createdAt));
+			const defaultMode = commands.defaultMode;
+			setRevshellCommandCache(pairing.key, {
+				ownerUserId: interaction.user.id,
+				connection,
+				pairing,
+				variants: commands,
+				defaultMode,
+			});
+			const embed = buildRevshellCommandEmbed({
+				pairing,
+				connection,
+				variants: commands,
+				mode: defaultMode,
+			});
+			const components = buildRevshellCommandComponents(
+				pairing.key,
+				defaultMode
+			);
 
 			const threadId =
 				interaction.channel?.isThread?.() === true
@@ -187,7 +184,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			if (interaction.guildId) patch.guildId = interaction.guildId;
 			upsertRevshellUserRecord(interaction.user.id, patch);
 
-			await interaction.editReply({ embeds: [embed] });
+			await interaction.editReply({
+				embeds: [embed],
+				components,
+			});
 		} catch (error) {
 			console.error("Failed to create reverse shell pairing:", error);
 			await interaction.editReply({
@@ -246,6 +246,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		}
 		try {
 			const pairing = await closeRevshellPairing(targetKey);
+			deleteRevshellCommandCache(targetKey);
 			const embed = buildPairingEmbed(pairing);
 			const patch: Partial<
 				Omit<
@@ -262,6 +263,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			await interaction.editReply({
 				content: `세션 ${targetKey}을(를) 종료했습니다.`,
 				embeds: [embed],
+				components: [],
 			});
 		} catch (error) {
 			console.error("Failed to close pairing:", error);

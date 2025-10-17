@@ -3,6 +3,7 @@ import * as buttonHandlers from "./interactionHandlers/buttonHandlers.js";
 import * as selectMenuHandlers from "./interactionHandlers/selectMenuHandlers.js";
 import * as modalHandlers from "./interactionHandlers/modalHandlers.js";
 import * as requestbinHandlers from "./interactionHandlers/requestbinHandlers.js";
+import * as revshellHandlers from "./interactionHandlers/revshellHandlers.js";
 import * as commandHandler from "./interactionHandlers/commandHandler.js";
 
 export const name = Events.InteractionCreate;
@@ -13,6 +14,12 @@ export async function execute(interaction: Interaction, client: any) {
 	if (interaction.isButton()) {
 		if (interaction.customId.startsWith("reqbin-panel:")) {
 			await requestbinHandlers.handleRequestBinPanelButton(interaction);
+			return;
+		}
+		if (interaction.customId.startsWith("revshell-mode:")) {
+			await revshellHandlers.handleRevshellCommandModeButton(
+				interaction
+			);
 			return;
 		}
 		// CTF Schedule pagination

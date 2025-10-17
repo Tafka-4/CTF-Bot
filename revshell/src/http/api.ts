@@ -9,6 +9,7 @@ export type HttpServerConfig = {
 	httpPort: number;
 	accessHostname: string;
 	accessPort: number;
+	accessUseTls: boolean;
 	statusSummary: () => { active: number; total: number };
 	store: PairingStore;
 };
@@ -37,16 +38,17 @@ export function createHttpServer(config: HttpServerConfig) {
 		});
 		const hostCandidate = config.accessHostname;
 		const portCandidate = config.accessPort;
-		const commands = config.store.buildCommandExamples(
-			pairing.key,
-			hostCandidate,
-			portCandidate
-		);
+		const commands = config.store.buildCommandExamples(pairing.key, {
+			host: hostCandidate,
+			port: portCandidate,
+			preferTls: config.accessUseTls,
+		});
 		res.status(201).json({
 			pairing,
 			connection: {
 				host: hostCandidate,
 				port: portCandidate,
+				useTls: config.accessUseTls,
 			},
 			commands,
 		});
@@ -137,6 +139,7 @@ export function createHttpServer(config: HttpServerConfig) {
 			listener: {
 				host,
 				port: config.accessPort,
+				useTls: config.accessUseTls,
 			},
 		});
 	});

