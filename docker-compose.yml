@@ -1,8 +1,22 @@
 services:
+  revshell:
+    build:
+      context: ./revshell
+      dockerfile: Dockerfile
+    environment:
+      - DOMAIN=${DOMAIN}
+      - HTTP_PORT=${REVSHELL_HTTP_PORT:-8000}
+      - REVSHELL_LISTEN_PORT=${REVSHELL_TCP_PORT:-3000}
+    ports:
+      - "${REVSHELL_HTTP_PORT:-8000}:8000"
+      - "${REVSHELL_TCP_PORT:-3000}:3000"
+    restart: unless-stopped
   bot:
     build:
       context: ./bot
       dockerfile: Dockerfile
+    depends_on:
+      - revshell
     environment:
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - DISCORD_BOT_CLIENT_ID=${DISCORD_BOT_CLIENT_ID}
@@ -27,4 +41,4 @@ services:
       - requestbin
     environment:
       - TUNNEL_TRANSPORT_PROTOCOL=http2
-    command: tunnel --no-autoupdate run --token ${REQBIN_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run --token ${REVSHELL_TUNNEL_TOKEN}
