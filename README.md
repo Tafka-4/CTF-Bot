@@ -19,7 +19,8 @@ The project is split into two runtimes:
 ### Deployment Notes
 
 - Copy `env.example` to `.env` and populate the required secrets before running `docker compose up`.
-- Ensure the listener port you expose (`REVSHELL_TCP_PORT`, defaults to `3000`) is reachable—for example, advertise your Tailscale hostname via `REVSHELL_ACCESS_HOSTNAME`.
+- Point `REVSHELL_ACCESS_HOSTNAME` at a dedicated reverse-shell domain (for example `revshell.example.com` or your Tailscale DNS name); the service shares this host in generated commands.
+- Ensure the listener port you expose (`REVSHELL_TCP_PORT`, defaults to `3000`) is reachable from that hostname.
 - `REVSHELL_HTTP_PORT` controls the host port used to reach the revshell REST API (defaults to `8000`).
 - Adjust `REVSHELL_HTTP_BASE_URL`/`REVSHELL_TCP_HOST` if you deploy the revshell service somewhere other than the bundled container.
 

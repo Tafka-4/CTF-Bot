@@ -4,7 +4,7 @@ export type ServiceConfig = {
 	shellPort: number;
 	shellHost: string;
 	maxBufferSize: number;
-	accessHostname?: string;
+	accessHostname: string;
 	accessPort: number;
 	cloudflaredDownloadBase: string;
 	clientProxyHost: string;
@@ -47,9 +47,15 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServiceConfig {
 		256 * 1024,
 		"REVSHELL_MAX_BUFFER_BYTES"
 	);
-	const accessHostname =
+	const accessHostnameCandidate =
 		env.REVSHELL_ACCESS_HOSTNAME?.trim() ||
-		(env.DOMAIN ? `revshell.${env.DOMAIN.trim()}` : undefined);
+		(env.DOMAIN ? `revshell.${env.DOMAIN.trim()}` : "");
+	if (!accessHostnameCandidate) {
+		throw new Error(
+			"REVSHELL_ACCESS_HOSTNAME or DOMAIN must be set so clients receive a reachable host."
+		);
+	}
+	const accessHostname = accessHostnameCandidate;
 	const accessPort = (() => {
 		const explicit = env.REVSHELL_ACCESS_PORT?.trim();
 		if (explicit) {
@@ -104,6 +110,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): ServiceConfig {
 		clientProxyPort,
 		pairingTtlMs,
 		closedRetentionMs,
-		...(accessHostname !== undefined ? { accessHostname } : {}),
+		accessHostname,
 	};
 }

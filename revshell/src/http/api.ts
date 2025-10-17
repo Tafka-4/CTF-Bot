@@ -7,7 +7,7 @@ import type { PairingRole, PairingStore } from "../pairingStore.js";
 export type HttpServerConfig = {
 	httpHost: string;
 	httpPort: number;
-	accessHostname?: string;
+	accessHostname: string;
 	accessPort: number;
 	statusSummary: () => { active: number; total: number };
 	store: PairingStore;
@@ -35,8 +35,7 @@ export function createHttpServer(config: HttpServerConfig) {
 			...(ownerUserId !== undefined ? { ownerUserId } : {}),
 			...(label !== undefined ? { label } : {}),
 		});
-		const hostCandidate =
-			config.accessHostname ?? process.env.DOMAIN ?? "127.0.0.1";
+		const hostCandidate = config.accessHostname;
 		const portCandidate = config.accessPort;
 		const commands = config.store.buildCommandExamples(
 			pairing.key,
@@ -130,7 +129,7 @@ export function createHttpServer(config: HttpServerConfig) {
 	});
 
 	app.get("/", (_req, res) => {
-		const host = config.accessHostname ?? process.env.DOMAIN ?? "127.0.0.1";
+		const host = config.accessHostname;
 		res.json({
 			service: "CTF Reverse Shell Relay",
 			description:

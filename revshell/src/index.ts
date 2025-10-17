@@ -15,9 +15,7 @@ const { server: httpServer } = createHttpServer({
 	store,
 	httpHost: config.httpHost,
 	httpPort: config.httpPort,
-	...(config.accessHostname !== undefined
-		? { accessHostname: config.accessHostname }
-		: {}),
+	accessHostname: config.accessHostname,
 	accessPort: config.accessPort,
 	statusSummary: () => store.statusSummary(),
 });
