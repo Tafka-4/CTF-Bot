@@ -4,9 +4,9 @@ WORKDIR /app
 
 RUN apk add --no-cache curl
 
-COPY package.json package-lock.json ./
+COPY package.json ./
 
-RUN npm ci && npm install -g typescript
+RUN npm i && npm install -g typescript
 
 RUN curl -fsSL -o /usr/local/bin/cloudflared \
   https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \

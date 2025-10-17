@@ -67,6 +67,8 @@ export function createTcpListener(config: TcpListenerConfig) {
 				pairingKey = keyValue;
 				role = roleValue as PairingRole;
 				cleanup();
+				console.log("Handshake complete", keyValue, role);
+				console.log("Remaining", remaining);
 				const registerResult = config.store.registerSocket(
 					keyValue,
 					role,
