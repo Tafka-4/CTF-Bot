@@ -23,6 +23,7 @@ The project is split into two runtimes:
 - `REVSHELL_ACCESS_PORT` is the port advertised to operators/targets (defaults to `3000`); keep it aligned with your public tunnel or Tailscale funnel configuration.
 - `REVSHELL_TCP_BIND_PORT` sets the host port that Docker binds to the reverse-shell listener (defaults to `3000`); change it if another process already occupies that port and point your tunnel at the new value (e.g. `tailscale funnel --tcp 3000 tcp://localhost:3300`).
 - `REVSHELL_HTTP_PORT` controls the host port used to reach the revshell REST API (defaults to `8000`).
+- Slash command output now favours plain `nc` pipelines; uncomment the provided `openssl s_client` examples if your ingress terminates TLS.
 - Adjust `REVSHELL_HTTP_BASE_URL`/`REVSHELL_TCP_HOST` if you deploy the revshell service somewhere other than the bundled container.
 
 ---

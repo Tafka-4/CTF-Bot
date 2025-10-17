@@ -162,7 +162,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 					},
 					{
 						name: "TLS tip",
-						value: "`openssl s_client -quiet` 대신 `ncat --ssl` 등 TLS 지원 도구를 사용해도 됩니다.",
+						value: "기본 명령은 `nc`로 평문 TCP에 연결합니다. 공개 서비스 등에서 TLS가 필요하면 명령 하단의 주석에 있는 `openssl s_client` 예시로 교체하세요.",
 					}
 				)
 				.setFooter({
