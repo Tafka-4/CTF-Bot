@@ -395,6 +395,9 @@ export class PairingStore {
 		}
 		pairing.status = "waiting";
 		pairing.lastActivityAt = now;
-		this.close(pairing.key, reason);
+		console.log("Pairing awaiting reconnection after socket close", {
+			key: pairing.key,
+			reason,
+		});
 	}
 }
